@@ -32,6 +32,8 @@ async function setupAndTestRabbitMQ() {
     const orderEvent = {
       eventType: 'order.placed',
       userId: 'user123',
+      userEmail: 'user123@example.com',
+      userPhone: '+1234567890',
       timestamp: new Date().toISOString(),
       data: {
         orderId: 'ord_789',
@@ -48,6 +50,8 @@ async function setupAndTestRabbitMQ() {
     const paymentEvent = {
       eventType: 'payment.received',
       userId: 'user123',
+      userEmail: 'user123@example.com',
+      userPhone: '+1234567890',
       timestamp: new Date().toISOString(),
       data: {
         orderId: 'ord_789',
@@ -63,6 +67,8 @@ async function setupAndTestRabbitMQ() {
     const profileEvent = {
       eventType: 'profile.password_changed',
       userId: 'user123',
+      userEmail: 'user123@example.com',
+      userPhone: '+1234567890',
       timestamp: new Date().toISOString(),
       data: {
         field: 'password',

@@ -2,6 +2,8 @@
 export interface BaseEvent {
   eventType: string;
   userId: string;
+  userEmail?: string;
+  userPhone?: string;
   timestamp: Date;
   data: any;
 }

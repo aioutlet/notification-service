@@ -16,8 +16,8 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/', homeRoutes);
-app.use('/api', notificationRoutes);
+app.use('/api/home', homeRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

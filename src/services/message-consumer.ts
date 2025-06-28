@@ -2,10 +2,19 @@ import amqp from 'amqplib';
 import config from '../config/index';
 import logger from '../utils/logger';
 import { NotificationEvent, EventTypes } from '../events/event-types';
+import NotificationService from './notification.service';
+import DatabaseService from './database.service';
 
 class MessageConsumer {
   private connection: any = null;
   private channel: any = null;
+  private notificationService: NotificationService;
+  private dbService: DatabaseService;
+
+  constructor() {
+    this.notificationService = new NotificationService();
+    this.dbService = DatabaseService.getInstance();
+  }
 
   async connect(): Promise<void> {
     try {
@@ -24,11 +33,14 @@ class MessageConsumer {
       await this.channel.bindQueue(config.rabbitmq.queues.notifications, config.rabbitmq.exchanges.order, 'order.*');
       await this.channel.bindQueue(config.rabbitmq.queues.notifications, config.rabbitmq.exchanges.user, 'user.*');
 
+      // Test database connection
+      await this.dbService.testConnection();
+
       logger.info('✅ RabbitMQ connection established');
       logger.info(`📥 Listening to queues: ${config.rabbitmq.queues.notifications}`);
       logger.info(`🔄 Bound to exchanges: ${config.rabbitmq.exchanges.order}, ${config.rabbitmq.exchanges.user}`);
     } catch (error) {
-      logger.error('❌ Failed to connect to RabbitMQ:', error);
+      logger.error('❌ Failed to connect to RabbitMQ or database:', error);
       throw error;
     }
   }
@@ -90,20 +102,49 @@ class MessageConsumer {
   }
 
   private async sendNotification(eventData: any): Promise<void> {
-    // This is where we'll implement the actual notification sending
-    // For now, just log what notification would be sent
+    let notificationId: string | undefined;
 
-    const notificationMessage = this.generateNotificationMessage(eventData);
+    try {
+      // Generate notification message
+      const notificationMessage = this.generateNotificationMessage(eventData);
 
-    logger.info('📤 Sending notification:', {
-      to: eventData.userId,
-      message: notificationMessage,
-      eventType: eventData.eventType,
-    });
+      // Save notification to database first
+      notificationId = await this.notificationService.createNotification(eventData, notificationMessage);
 
-    // TODO: Implement actual email/SMS sending here
-    // await emailService.send(...)
-    // await smsService.send(...)
+      logger.info('📤 Processing notification:', {
+        notificationId,
+        to: eventData.userId,
+        message: notificationMessage,
+        eventType: eventData.eventType,
+      });
+
+      // TODO: Implement actual email/SMS sending here
+      // For now, we'll just mark it as sent
+      // await emailService.send(...)
+      // await smsService.send(...)
+
+      // Simulate successful delivery for now
+      await this.notificationService.updateNotificationStatus(notificationId, 'sent');
+
+      logger.info('✅ Notification sent successfully:', { notificationId });
+    } catch (error) {
+      logger.error('❌ Failed to send notification:', error);
+
+      // Update notification status to failed if we have the ID
+      if (notificationId) {
+        try {
+          await this.notificationService.updateNotificationStatus(
+            notificationId,
+            'failed',
+            error instanceof Error ? error.message : 'Unknown error'
+          );
+        } catch (updateError) {
+          logger.error('❌ Failed to update notification status:', updateError);
+        }
+      }
+
+      throw error;
+    }
   }
 
   private generateNotificationMessage(eventData: any): string {
