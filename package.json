@@ -1,0 +1,37 @@
+{
+  "name": "notification-service",
+  "version": "1.0.0",
+  "description": "Generic event-driven notification service",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [
+    "notifications",
+    "events",
+    "microservice",
+    "typescript"
+  ],
+  "author": "AI Outlet Team",
+  "license": "MIT",
+  "dependencies": {
+    "amqplib": "^0.10.8",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mysql2": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.7",
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.19.1",
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
