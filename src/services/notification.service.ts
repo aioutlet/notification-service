@@ -123,7 +123,7 @@ class NotificationService {
       // Ensure limit and offset are valid integers
       const safeLimit = Math.max(1, Math.min(limit, 1000)); // Between 1 and 1000
       const safeOffset = Math.max(0, offset);
-      
+
       const query = `
         SELECT * FROM notifications 
         WHERE user_id = ? 
