@@ -27,14 +27,18 @@ class DatabaseService {
   }
 
   async testConnection(): Promise<void> {
+    let connection: mysql.PoolConnection | null = null;
     try {
-      const connection = await this.pool.getConnection();
+      connection = await this.pool.getConnection();
       await connection.ping();
-      connection.release();
       logger.info('✅ Database connection successful');
     } catch (error) {
       logger.error('❌ Database connection failed:', error);
       throw error;
+    } finally {
+      if (connection) {
+        connection.release();
+      }
     }
   }
 
