@@ -58,7 +58,7 @@ describe('Home Controller', () => {
     it('should use npm_package_version if available', () => {
       const req = mockRequest();
       const res = mockResponse();
-      
+
       // Mock process.env.npm_package_version
       const originalVersion = process.env.npm_package_version;
       process.env.npm_package_version = '2.0.0';
@@ -95,7 +95,7 @@ describe('Home Controller', () => {
     it('should use npm_package_version if available', () => {
       const req = mockRequest();
       const res = mockResponse();
-      
+
       // Mock process.env.npm_package_version
       const originalVersion = process.env.npm_package_version;
       process.env.npm_package_version = '3.0.0';
@@ -143,7 +143,7 @@ describe('Home Controller', () => {
     it('should use npm_package_version if available', () => {
       const req = mockRequest();
       const res = mockResponse();
-      
+
       // Mock process.env.npm_package_version
       const originalVersion = process.env.npm_package_version;
       process.env.npm_package_version = '4.0.0';
