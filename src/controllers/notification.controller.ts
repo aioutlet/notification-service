@@ -3,6 +3,8 @@ import { EventTypes } from '../events/event-types';
 import logger from '../utils/logger';
 import NotificationService from '../services/notification.service';
 import EmailService from '../services/email.service';
+import { createSuccessResponse } from '../middlewares/validation.middleware';
+import { CreateNotificationInput, NotificationFiltersInput, EmailTestInput } from '../validators/schemas';
 
 const notificationService = new NotificationService();
 const emailService = new EmailService();
@@ -11,32 +13,13 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
   try {
     logger.info('Send notification endpoint accessed (TESTING ONLY)');
 
-    const { eventType, userId, userEmail, userPhone, data } = req.body;
+    // Data is already validated by middleware
+    const { eventType, userId, userEmail, userPhone, data, channel = 'email' } = req.body as CreateNotificationInput;
 
-    // Basic validation
-    if (!eventType || !userId) {
-      res.status(400).json({
-        success: false,
-        message: 'eventType and userId are required',
-      });
-      return;
-    }
-
-    // Validate event type
-    if (!Object.values(EventTypes).includes(eventType)) {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid event type',
-        validEventTypes: Object.values(EventTypes),
-      });
-      return;
-    }
-
-    // For testing only - simulate manual event injection
     logger.warn('⚠️ TESTING: Manual notification triggered via REST API');
     logger.warn('⚠️ PRODUCTION: Notifications should come from RabbitMQ message broker');
 
-    // Create notification event object
+    // Create notification event object (using BaseEvent interface)
     const notificationEvent = {
       eventType,
       userId,
@@ -44,9 +27,7 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
       userPhone,
       timestamp: new Date(),
       data: data || {},
-    };
-
-    const channel = req.body.channel || 'email'; // Default to email
+    } as any; // Type assertion to handle union type complexity
 
     // Save to database with template rendering (but don't send email)
     const notificationId = await notificationService.createNotification(notificationEvent, channel);
@@ -60,21 +41,26 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
       note: 'Email sending happens via RabbitMQ consumer in production',
     });
 
-    res.status(201).json({
-      success: true,
-      message: 'Test notification created and saved to database with template rendering',
-      notificationId,
-      eventType,
-      userId,
-      channel,
-      status: 'sent',
-      timestamp: new Date().toISOString(),
-      note: {
-        testing: 'This endpoint is for testing template rendering and database storage only',
-        production: 'Real notifications are sent via RabbitMQ message broker → notification consumer → email delivery',
-        flow: 'Order Service → RabbitMQ → Notification Service (consumer) → Email/SMS/etc',
+    const response = createSuccessResponse(
+      'Test notification created and saved to database with template rendering',
+      {
+        notificationId,
+        eventType,
+        userId,
+        channel,
+        status: 'sent',
       },
-    });
+      {
+        note: {
+          testing: 'This endpoint is for testing template rendering and database storage only',
+          production:
+            'Real notifications are sent via RabbitMQ message broker → notification consumer → email delivery',
+          flow: 'Order Service → RabbitMQ → Notification Service (consumer) → Email/SMS/etc',
+        },
+      }
+    );
+
+    res.status(201).json(response);
   } catch (error) {
     logger.error('❌ Error creating test notification:', error);
     res.status(500).json({
