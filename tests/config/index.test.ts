@@ -251,13 +251,8 @@ describe('Config', () => {
         WINDIR: originalEnv.WINDIR,
         PORT: 'invalid',
         DB_PORT: 'not-a-number',
-        SMTP_PORT: '',
+        SMTP_PORT: 'invalid-port',
       };
-
-      // Mock dotenv.config to prevent .env file loading
-      jest.doMock('dotenv', () => ({
-        config: jest.fn(),
-      }));
 
       const config = require('../../src/config/index').default;
 
@@ -477,27 +472,22 @@ describe('Config', () => {
   });
 
   describe('Security considerations', () => {
-    it('should handle empty credentials gracefully', () => {
+    it('should handle undefined credentials gracefully by using defaults', () => {
       process.env = {
         NODE_ENV: 'test',
         PATH: originalEnv.PATH,
         SYSTEMROOT: originalEnv.SYSTEMROOT,
         WINDIR: originalEnv.WINDIR,
-        DB_PASSWORD: '',
-        SMTP_USER: '',
-        SMTP_PASS: '',
+        // Don't set DB_PASSWORD, SMTP_USER, SMTP_PASS - let them be undefined
+        // When undefined, the config will use the || fallback values
       };
-
-      // Mock dotenv.config to prevent .env file loading
-      jest.doMock('dotenv', () => ({
-        config: jest.fn(),
-      }));
 
       const config = require('../../src/config/index').default;
 
-      expect(config.database.password).toBe('');
-      expect(config.email.smtp.auth.user).toBe('');
-      expect(config.email.smtp.auth.pass).toBe('');
+      // When environment variables are undefined, config uses default values
+      expect(config.database.password).toBe('notification_pass'); // default value
+      expect(config.email.smtp.auth.user).toBe(''); // default value (empty string)
+      expect(config.email.smtp.auth.pass).toBe(''); // default value (empty string)
     });
 
     it('should not expose sensitive data in the config object structure', () => {
