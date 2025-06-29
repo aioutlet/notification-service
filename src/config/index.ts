@@ -26,6 +26,23 @@ interface Config {
       notifications: string;
     };
   };
+  email: {
+    provider: string;
+    smtp: {
+      host: string;
+      port: number;
+      secure: boolean;
+      auth: {
+        user: string;
+        pass: string;
+      };
+    };
+    from: {
+      name: string;
+      address: string;
+    };
+    enabled: boolean;
+  };
 }
 
 const config: Config = {
@@ -50,6 +67,23 @@ const config: Config = {
     queues: {
       notifications: process.env.RABBITMQ_QUEUE_NOTIFICATIONS || 'notifications',
     },
+  },
+  email: {
+    provider: process.env.EMAIL_PROVIDER || 'smtp',
+    smtp: {
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || '',
+      },
+    },
+    from: {
+      name: process.env.EMAIL_FROM_NAME || 'AI Outlet Notifications',
+      address: process.env.EMAIL_FROM_ADDRESS || 'noreply@aioutlet.com',
+    },
+    enabled: process.env.EMAIL_ENABLED !== 'false', // default to true unless explicitly disabled
   },
 };
 

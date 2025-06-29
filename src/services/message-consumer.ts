@@ -4,16 +4,19 @@ import logger from '../utils/logger';
 import { NotificationEvent, EventTypes } from '../events/event-types';
 import NotificationService from './notification.service';
 import DatabaseService from './database.service';
+import EmailService from './email.service';
 
 class MessageConsumer {
   private connection: any = null;
   private channel: any = null;
   private notificationService: NotificationService;
   private dbService: DatabaseService;
+  private emailService: EmailService;
 
   constructor() {
     this.notificationService = new NotificationService();
     this.dbService = DatabaseService.getInstance();
+    this.emailService = new EmailService();
   }
 
   async connect(): Promise<void> {
@@ -118,15 +121,38 @@ class MessageConsumer {
         eventType: eventData.eventType,
       });
 
-      // TODO: Implement actual email/SMS sending here
-      // For now, we'll just mark it as sent
-      // await emailService.send(...)
-      // await smsService.send(...)
+      // Send actual email notification
+      let emailSent = false;
+      if (eventData.userEmail && this.emailService.isEnabled()) {
+        const subject = this.generateEmailSubject(eventData.eventType, eventData.data);
+        emailSent = await this.emailService.sendNotificationEmail(
+          eventData.userEmail,
+          subject,
+          notificationMessage,
+          eventData.eventType,
+          eventData.data
+        );
+      } else {
+        logger.debug('📧 Email sending skipped:', {
+          reason: !eventData.userEmail ? 'No email address' : 'Email service disabled',
+          userEmail: eventData.userEmail,
+          emailEnabled: this.emailService.isEnabled(),
+        });
+      }
 
-      // Simulate successful delivery for now
-      await this.notificationService.updateNotificationStatus(notificationId, 'sent');
-
-      logger.info('✅ Notification sent successfully:', { notificationId });
+      // Update notification status based on email sending result
+      if (emailSent) {
+        await this.notificationService.updateNotificationStatus(notificationId, 'sent');
+        logger.info('✅ Notification sent successfully:', { notificationId, emailSent: true });
+      } else {
+        // If email failed but notification was saved, mark as failed
+        await this.notificationService.updateNotificationStatus(
+          notificationId,
+          'failed',
+          'Email sending failed or email address not provided'
+        );
+        logger.warn('⚠️ Notification saved but email sending failed:', { notificationId });
+      }
     } catch (error) {
       logger.error('❌ Failed to send notification:', error);
 
@@ -167,6 +193,29 @@ class MessageConsumer {
         return `Your bank details have been updated successfully.`;
       default:
         return `You have a new notification: ${eventData.eventType}`;
+    }
+  }
+
+  private generateEmailSubject(eventType: string, eventData?: any): string {
+    switch (eventType) {
+      case EventTypes.ORDER_PLACED:
+        return `🛍️ Order Confirmation - ${eventData?.orderNumber || 'Your Order'}`;
+      case EventTypes.ORDER_DELIVERED:
+        return `📦 Order Delivered - ${eventData?.orderNumber || 'Your Order'}`;
+      case EventTypes.ORDER_CANCELLED:
+        return `❌ Order Cancelled - ${eventData?.orderNumber || 'Your Order'}`;
+      case EventTypes.PAYMENT_RECEIVED:
+        return `💳 Payment Confirmed - $${eventData?.amount || 'Amount'}`;
+      case EventTypes.PAYMENT_FAILED:
+        return `⚠️ Payment Failed - Action Required`;
+      case EventTypes.PROFILE_PASSWORD_CHANGED:
+        return `🔒 Password Changed Successfully`;
+      case EventTypes.PROFILE_NOTIFICATION_PREFERENCES_UPDATED:
+        return `⚙️ Notification Preferences Updated`;
+      case EventTypes.PROFILE_BANK_DETAILS_UPDATED:
+        return `🏦 Bank Details Updated`;
+      default:
+        return `🔔 Notification from AI Outlet`;
     }
   }
 

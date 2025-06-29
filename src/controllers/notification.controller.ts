@@ -2,8 +2,10 @@ import { Request, Response } from 'express';
 import { EventTypes } from '../events/event-types';
 import logger from '../utils/logger';
 import NotificationService from '../services/notification.service';
+import EmailService from '../services/email.service';
 
 const notificationService = new NotificationService();
+const emailService = new EmailService();
 
 export async function sendNotification(req: Request, res: Response): Promise<void> {
   try {
@@ -212,4 +214,62 @@ export function getNotifications(req: Request, res: Response): void {
     message: 'Notifications endpoint - deprecated, use /users/:userId/notifications instead',
     notifications: [],
   });
+}
+
+// Test email service endpoint
+export async function testEmailService(req: Request, res: Response): Promise<void> {
+  try {
+    // Use request body with sensible defaults for POST request
+    const to = req.body?.to || 'test@example.com';
+    const subject = req.body?.subject || '🧪 Email Service Test - AI Outlet';
+    const message =
+      req.body?.message ||
+      'This is a test email from the AI Outlet Notification Service. If you received this, the email service is working correctly! 🎉';
+
+    logger.info('Testing email service via API:', { to, subject, method: req.method });
+
+    // First check if email service is configured and enabled
+    const providerInfo = emailService.getProviderInfo();
+    if (!providerInfo.enabled) {
+      res.status(400).json({
+        success: false,
+        message: 'Email service is disabled. Check EMAIL_ENABLED in configuration.',
+        emailService: providerInfo,
+      });
+      return;
+    }
+
+    if (!providerInfo.configured) {
+      res.status(400).json({
+        success: false,
+        message: 'Email service is not properly configured. Check SMTP settings.',
+        emailService: providerInfo,
+      });
+      return;
+    }
+
+    const emailSent = await emailService.sendNotificationEmail(to, subject, message, 'test', {
+      source: 'manual_test_api',
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(emailSent ? 200 : 500).json({
+      success: emailSent,
+      message: emailSent ? 'Test email sent successfully' : 'Failed to send test email',
+      testDetails: {
+        to,
+        subject,
+        method: req.method,
+      },
+      emailService: providerInfo,
+    });
+  } catch (error) {
+    logger.error('Error testing email service:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to test email service',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      emailService: emailService.getProviderInfo(),
+    });
+  }
 }
