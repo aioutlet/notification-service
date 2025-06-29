@@ -9,6 +9,19 @@ export const phoneSchema = z
   .optional();
 export const uuidSchema = z.string().uuid('Invalid UUID format');
 
+// Common parameter schemas
+export const notificationIdSchema = z.object({
+  notificationId: z.string().uuid('Invalid notification ID format'),
+});
+
+export const userIdSchema = z.object({
+  userId: z.string().min(1, 'User ID is required'),
+});
+
+export const templateIdSchema = z.object({
+  id: z.string().uuid('Invalid template ID format'),
+});
+
 // Event type validation
 export const eventTypeSchema = z.nativeEnum(EventTypes, {
   errorMap: () => ({ message: 'Invalid event type' }),
@@ -17,6 +30,12 @@ export const eventTypeSchema = z.nativeEnum(EventTypes, {
 // Channel validation
 export const channelSchema = z.enum(['email', 'sms', 'push', 'webhook'], {
   errorMap: () => ({ message: 'Invalid channel type' }),
+});
+
+// Template route parameters schema
+export const templateParamsSchema = z.object({
+  eventType: z.string().min(1, 'Event type is required'),
+  channel: z.enum(['email', 'sms', 'push', 'webhook']),
 });
 
 // Notification creation schema
@@ -76,3 +95,9 @@ export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
 export type RenderTemplateTestInput = z.infer<typeof renderTemplateTestSchema>;
 export type NotificationFiltersInput = z.infer<typeof notificationFiltersSchema>;
 export type EmailTestInput = z.infer<typeof emailTestSchema>;
+
+// Parameter validation types
+export type NotificationIdParams = z.infer<typeof notificationIdSchema>;
+export type UserIdParams = z.infer<typeof userIdSchema>;
+export type TemplateIdParams = z.infer<typeof templateIdSchema>;
+export type TemplateParamsType = z.infer<typeof templateParamsSchema>;

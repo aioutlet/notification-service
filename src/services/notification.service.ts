@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import DatabaseService from './database.service';
 import TemplateService, { TemplateVariables } from './template.service';
+import MonitoringService from './monitoring.service';
 import logger from '../utils/logger';
 import { NotificationEvent } from '../events/event-types';
 
@@ -28,16 +29,19 @@ export interface NotificationRecord {
 class NotificationService {
   private db: DatabaseService;
   private templateService: TemplateService;
+  private monitoring: MonitoringService;
 
   constructor() {
     this.db = DatabaseService.getInstance();
     this.templateService = new TemplateService();
+    this.monitoring = MonitoringService.getInstance();
   }
 
   async createNotification(
     eventData: NotificationEvent,
     channel: 'email' | 'sms' | 'push' | 'webhook' = 'email'
   ): Promise<string> {
+    const startTime = Date.now();
     const notificationId = uuidv4();
 
     try {
@@ -47,7 +51,10 @@ class NotificationService {
       if (!template) {
         logger.warn(`⚠️ No template found for event: ${eventData.eventType}, channel: ${channel}`);
         // Create a basic notification without template
-        return await this.createBasicNotification(eventData, channel, notificationId);
+        const result = await this.createBasicNotification(eventData, channel, notificationId);
+        const duration = Date.now() - startTime;
+        this.monitoring.recordNotificationSent(channel, duration);
+        return result;
       }
 
       // Prepare template variables from event data
@@ -94,6 +101,10 @@ class NotificationService {
       ];
 
       await this.db.query(query, values);
+      const duration = Date.now() - startTime;
+
+      // Record metrics
+      this.monitoring.recordNotificationSent(channel, duration);
 
       logger.info('💾 Notification saved to database with template:', {
         notificationId,
@@ -101,10 +112,16 @@ class NotificationService {
         userId: eventData.userId,
         templateId: template.id,
         channel,
+        duration: `${duration}ms`,
       });
 
       return notificationId;
     } catch (error) {
+      const duration = Date.now() - startTime;
+
+      // Record failure metrics
+      this.monitoring.recordNotificationFailed(channel, 'database_error');
+
       logger.error('❌ Failed to save notification to database:', error);
       throw error;
     }

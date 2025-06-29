@@ -5,6 +5,7 @@ import NotificationService from '../services/notification.service';
 import EmailService from '../services/email.service';
 import { createSuccessResponse } from '../middlewares/validation.middleware';
 import { CreateNotificationInput, NotificationFiltersInput, EmailTestInput } from '../validators/schemas';
+import { AuthRequest } from '../middlewares/auth.middleware';
 
 const notificationService = new NotificationService();
 const emailService = new EmailService();
@@ -72,7 +73,7 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
 }
 
 // Get notifications for a specific user
-export async function getUserNotifications(req: Request, res: Response): Promise<void> {
+export async function getUserNotifications(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { userId } = req.params;
     const limit = parseInt(req.query.limit as string) || 50;
@@ -85,6 +86,33 @@ export async function getUserNotifications(req: Request, res: Response): Promise
       });
       return;
     }
+
+    // Authorization check: Users can only access their own notifications, admins can access any
+    const isAdmin = req.user?.role === 'admin';
+    const isOwnData = req.user?.id === userId;
+
+    if (!isAdmin && !isOwnData) {
+      logger.warn('🚫 Unauthorized access attempt:', {
+        requestedUserId: userId,
+        currentUserId: req.user?.id,
+        currentUserRole: req.user?.role,
+        ip: req.ip,
+        path: req.path,
+      });
+      res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only view your own notifications.',
+      });
+      return;
+    }
+
+    logger.info('✅ Authorized notification access:', {
+      requestedUserId: userId,
+      currentUserId: req.user?.id,
+      currentUserRole: req.user?.role,
+      isAdmin,
+      isOwnData,
+    });
 
     const notifications = await notificationService.getNotificationsByUser(userId, limit, offset);
 

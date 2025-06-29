@@ -7,25 +7,47 @@ import {
   deleteTemplate,
   renderTemplateTest,
 } from '../controllers/template.controller';
+import { validateBody, validateParams } from '../middlewares/validation.middleware';
+import {
+  createTemplateSchema,
+  updateTemplateSchema,
+  renderTemplateTestSchema,
+  templateIdSchema,
+  templateParamsSchema,
+} from '../validators/schemas';
+import AuthMiddleware, { protect, admin } from '../middlewares/auth.middleware';
 
 const router = Router();
 
 // GET /api/templates - Get all templates (with optional ?active=false filter)
-router.get('/', getAllTemplates);
+// Protected: Admin access required
+router.get('/', AuthMiddleware.protect, AuthMiddleware.admin, getAllTemplates);
 
 // GET /api/templates/:eventType/:channel - Get specific template
-router.get('/:eventType/:channel', getTemplate);
+// Protected: Authenticated users can view templates
+router.get('/:eventType/:channel', AuthMiddleware.protect, validateParams(templateParamsSchema), getTemplate);
 
 // POST /api/templates - Create new template
-router.post('/', createTemplate);
+// Protected: Admin access required
+router.post('/', AuthMiddleware.protect, AuthMiddleware.admin, validateBody(createTemplateSchema), createTemplate);
 
 // PUT /api/templates/:id - Update template
-router.put('/:id', updateTemplate);
+// Protected: Admin access required
+router.put(
+  '/:id',
+  AuthMiddleware.protect,
+  AuthMiddleware.admin,
+  validateParams(templateIdSchema),
+  validateBody(updateTemplateSchema),
+  updateTemplate
+);
 
 // DELETE /api/templates/:id - Delete template
-router.delete('/:id', deleteTemplate);
+// Protected: Admin access required
+router.delete('/:id', AuthMiddleware.protect, AuthMiddleware.admin, validateParams(templateIdSchema), deleteTemplate);
 
 // POST /api/templates/test/render - Test template rendering
-router.post('/test/render', renderTemplateTest);
+// Protected: Authenticated users can test templates
+router.post('/test/render', AuthMiddleware.protect, validateBody(renderTemplateTestSchema), renderTemplateTest);
 
 export default router;
