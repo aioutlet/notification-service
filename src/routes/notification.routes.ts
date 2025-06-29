@@ -10,10 +10,10 @@ import {
 
 const router = express.Router();
 
-// POST /api/notifications - Send a notification (testing only)
-router.post('/', sendNotification);
+// POST /api/notifications/send - Create test notification (development only)
+router.post('/send', sendNotification);
 
-// GET /api/notifications - Get notifications (deprecated)
+// GET /api/notifications - Get all notifications with optional filters
 router.get('/', getNotifications);
 
 // GET /api/notifications/stats - Get notification statistics

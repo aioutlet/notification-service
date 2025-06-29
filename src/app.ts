@@ -1,6 +1,7 @@
 import express from 'express';
 import homeRoutes from './routes/home.routes';
 import notificationRoutes from './routes/notification.routes';
+import templateRoutes from './routes/template.routes';
 import logger from './utils/logger';
 
 const app = express();
@@ -18,6 +19,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/home', homeRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/templates', templateRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

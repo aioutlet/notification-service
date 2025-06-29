@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id VARCHAR(100) NOT NULL,
     recipient_email VARCHAR(255),
     recipient_phone VARCHAR(50),
+    subject VARCHAR(255),
     message TEXT NOT NULL,
     channel ENUM('email', 'sms', 'push', 'webhook') NOT NULL DEFAULT 'email',
     status ENUM('pending', 'sent', 'failed', 'retry') NOT NULL DEFAULT 'pending',
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     failed_at TIMESTAMP NULL,
     error_message TEXT,
     event_data JSON,
+    template_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -23,7 +25,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_event_type (event_type),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at),
-    INDEX idx_notification_id (notification_id)
+    INDEX idx_notification_id (notification_id),
+    INDEX idx_template_id (template_id)
 );
 
 -- Create notification templates table (for future use)

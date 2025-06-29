@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import DatabaseService from './database.service';
+import TemplateService, { TemplateVariables } from './template.service';
 import logger from '../utils/logger';
 import { NotificationEvent } from '../events/event-types';
 
@@ -10,6 +11,7 @@ export interface NotificationRecord {
   user_id: string;
   recipient_email?: string;
   recipient_phone?: string;
+  subject?: string;
   message: string;
   channel: 'email' | 'sms' | 'push' | 'webhook';
   status: 'pending' | 'sent' | 'failed' | 'retry';
@@ -18,39 +20,62 @@ export interface NotificationRecord {
   failed_at?: Date;
   error_message?: string;
   event_data?: any;
+  template_id?: number;
   created_at?: Date;
   updated_at?: Date;
 }
 
 class NotificationService {
   private db: DatabaseService;
+  private templateService: TemplateService;
 
   constructor() {
     this.db = DatabaseService.getInstance();
+    this.templateService = new TemplateService();
   }
 
-  async createNotification(eventData: NotificationEvent, message: string): Promise<string> {
+  async createNotification(
+    eventData: NotificationEvent,
+    channel: 'email' | 'sms' | 'push' | 'webhook' = 'email'
+  ): Promise<string> {
     const notificationId = uuidv4();
 
     try {
+      // Get the template for this event type and channel
+      const template = await this.templateService.getTemplate(eventData.eventType, channel);
+
+      if (!template) {
+        logger.warn(`⚠️ No template found for event: ${eventData.eventType}, channel: ${channel}`);
+        // Create a basic notification without template
+        return await this.createBasicNotification(eventData, channel, notificationId);
+      }
+
+      // Prepare template variables from event data
+      const templateVariables = this.prepareTemplateVariables(eventData);
+
+      // Render the template
+      const rendered = this.templateService.renderTemplate(template, templateVariables);
+
       const notification: Omit<NotificationRecord, 'id' | 'created_at' | 'updated_at'> = {
         notification_id: notificationId,
         event_type: eventData.eventType,
         user_id: eventData.userId,
         recipient_email: eventData.userEmail,
         recipient_phone: eventData.userPhone,
-        message,
-        channel: 'email', // Default channel for now
+        subject: rendered.subject,
+        message: rendered.message,
+        channel,
         status: 'pending',
         attempts: 0,
         event_data: JSON.stringify(eventData.data || {}),
+        template_id: template.id,
       };
 
       const query = `
         INSERT INTO notifications (
           notification_id, event_type, user_id, recipient_email, recipient_phone,
-          message, channel, status, attempts, event_data
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          subject, message, channel, status, attempts, event_data, template_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const values = [
@@ -59,19 +84,23 @@ class NotificationService {
         notification.user_id,
         notification.recipient_email,
         notification.recipient_phone,
+        notification.subject,
         notification.message,
         notification.channel,
         notification.status,
         notification.attempts,
         notification.event_data,
+        notification.template_id,
       ];
 
       await this.db.query(query, values);
 
-      logger.info('💾 Notification saved to database:', {
+      logger.info('💾 Notification saved to database with template:', {
         notificationId,
         eventType: eventData.eventType,
         userId: eventData.userId,
+        templateId: template.id,
+        channel,
       });
 
       return notificationId;
@@ -152,13 +181,9 @@ class NotificationService {
         return null;
       }
 
-      const notification = results[0];
-      return {
-        ...notification,
-        event_data: this.parseEventData(notification.event_data),
-      };
+      return results[0] as NotificationRecord;
     } catch (error) {
-      logger.error('❌ Failed to get notification by ID:', error);
+      logger.error('❌ Failed to get notification by ID:', { notificationId, error });
       throw error;
     }
   }
@@ -214,6 +239,184 @@ class NotificationService {
 
     // For any other type, return as-is
     return eventData;
+  }
+
+  private async createBasicNotification(
+    eventData: NotificationEvent,
+    channel: 'email' | 'sms' | 'push' | 'webhook',
+    notificationId: string
+  ): Promise<string> {
+    // Fallback to basic notification without template
+    const basicMessage = this.generateBasicMessage(eventData);
+
+    const notification: Omit<NotificationRecord, 'id' | 'created_at' | 'updated_at'> = {
+      notification_id: notificationId,
+      event_type: eventData.eventType,
+      user_id: eventData.userId,
+      recipient_email: eventData.userEmail,
+      recipient_phone: eventData.userPhone,
+      subject: `Notification: ${eventData.eventType}`,
+      message: basicMessage,
+      channel,
+      status: 'pending',
+      attempts: 0,
+      event_data: JSON.stringify(eventData.data || {}),
+    };
+
+    const query = `
+      INSERT INTO notifications (
+        notification_id, event_type, user_id, recipient_email, recipient_phone,
+        subject, message, channel, status, attempts, event_data
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      notification.notification_id,
+      notification.event_type,
+      notification.user_id,
+      notification.recipient_email,
+      notification.recipient_phone,
+      notification.subject,
+      notification.message,
+      notification.channel,
+      notification.status,
+      notification.attempts,
+      notification.event_data,
+    ];
+
+    await this.db.query(query, values);
+
+    logger.info('💾 Basic notification saved to database:', {
+      notificationId,
+      eventType: eventData.eventType,
+      userId: eventData.userId,
+      channel,
+    });
+
+    return notificationId;
+  }
+
+  private prepareTemplateVariables(eventData: NotificationEvent): TemplateVariables {
+    const variables: TemplateVariables = {
+      userId: eventData.userId,
+      userEmail: eventData.userEmail,
+      userPhone: eventData.userPhone,
+      eventType: eventData.eventType,
+      timestamp: new Date().toISOString(),
+      ...(eventData.data || {}), // Spread event-specific data
+    };
+
+    // Add event-specific variables based on event type
+    if (eventData.eventType.startsWith('order.')) {
+      const orderData = eventData.data as any;
+      if (orderData) {
+        variables.orderId = orderData.orderId;
+        variables.orderNumber = orderData.orderNumber;
+        variables.orderAmount = orderData.amount;
+        variables.orderItems = orderData.items;
+      }
+    } else if (eventData.eventType.startsWith('payment.')) {
+      const paymentData = eventData.data as any;
+      if (paymentData) {
+        variables.paymentId = paymentData.paymentId;
+        variables.amount = paymentData.amount;
+        variables.orderId = paymentData.orderId;
+        variables.reason = paymentData.reason;
+      }
+    } else if (eventData.eventType.startsWith('profile.')) {
+      const profileData = eventData.data as any;
+      if (profileData) {
+        variables.previousEmail = profileData.previousEmail;
+        variables.updatedFields = profileData.updatedFields;
+      }
+    }
+
+    return variables;
+  }
+
+  private generateBasicMessage(eventData: NotificationEvent): string {
+    const data = eventData.data as any;
+
+    if (eventData.eventType.startsWith('order.')) {
+      const orderId = data?.orderId || 'N/A';
+      if (eventData.eventType.includes('placed')) {
+        return `Your order ${orderId} has been placed successfully.`;
+      } else if (eventData.eventType.includes('cancelled')) {
+        return `Your order ${orderId} has been cancelled.`;
+      } else if (eventData.eventType.includes('delivered')) {
+        return `Your order ${orderId} has been delivered.`;
+      }
+      return `Order ${orderId} update.`;
+    } else if (eventData.eventType.startsWith('payment.')) {
+      const amount = data?.amount || 'N/A';
+      if (eventData.eventType.includes('received')) {
+        return `Payment of ${amount} has been received successfully.`;
+      } else if (eventData.eventType.includes('failed')) {
+        const reason = data?.reason ? ` Reason: ${data.reason}` : '';
+        return `Payment of ${amount} has failed.${reason}`;
+      }
+      return `Payment update: ${amount}`;
+    } else if (eventData.eventType.startsWith('profile.')) {
+      if (eventData.eventType.includes('password_changed')) {
+        return `Your password has been changed successfully.`;
+      } else if (eventData.eventType.includes('notification_preferences')) {
+        return `Your notification preferences have been updated.`;
+      } else if (eventData.eventType.includes('bank_details')) {
+        return `Your bank details have been updated.`;
+      }
+      return `Your profile has been updated.`;
+    }
+
+    return `Notification: ${eventData.eventType}`;
+  }
+
+  async getAllNotifications(
+    options: {
+      limit?: number;
+      offset?: number;
+      status?: string;
+      eventType?: string;
+    } = {}
+  ): Promise<NotificationRecord[]> {
+    try {
+      const { limit = 50, offset = 0, status, eventType } = options;
+
+      // Ensure limit and offset are valid integers
+      const safeLimit = Math.max(1, Math.min(limit, 1000)); // Between 1 and 1000
+      const safeOffset = Math.max(0, offset);
+
+      let query = 'SELECT * FROM notifications';
+      const conditions: string[] = [];
+      const values: any[] = [];
+
+      // Add filters if provided
+      if (status) {
+        conditions.push('status = ?');
+        values.push(status);
+      }
+
+      if (eventType) {
+        conditions.push('event_type = ?');
+        values.push(eventType);
+      }
+
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+      }
+
+      query += ` ORDER BY created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+
+      const results = await this.db.query(query, values);
+
+      // Handle event_data properly - it might be a string or already an object
+      return results.map((row: any) => ({
+        ...row,
+        event_data: this.parseEventData(row.event_data),
+      }));
+    } catch (error) {
+      logger.error('❌ Failed to get all notifications:', error);
+      throw error;
+    }
   }
 }
 

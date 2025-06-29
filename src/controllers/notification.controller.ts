@@ -33,15 +33,8 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
     }
 
     // For testing only - simulate manual event injection
-    logger.warn('⚠️ TESTING: Manual notification triggered via API (not recommended for production)');
-    logger.info('Processing test notification:', {
-      eventType,
-      userId,
-      userEmail,
-      userPhone,
-      data,
-      timestamp: new Date().toISOString(),
-    });
+    logger.warn('⚠️ TESTING: Manual notification triggered via REST API');
+    logger.warn('⚠️ PRODUCTION: Notifications should come from RabbitMQ message broker');
 
     // Create notification event object
     const notificationEvent = {
@@ -53,26 +46,34 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
       data: data || {},
     };
 
-    // Generate notification message (similar to message consumer)
-    const message = generateNotificationMessage(notificationEvent);
+    const channel = req.body.channel || 'email'; // Default to email
 
-    // Actually save to database
-    const notificationId = await notificationService.createNotification(notificationEvent, message);
+    // Save to database with template rendering (but don't send email)
+    const notificationId = await notificationService.createNotification(notificationEvent, channel);
 
-    // Mark as sent immediately for testing
+    // Mark as sent for testing purposes (actual sending happens via RabbitMQ consumer)
     await notificationService.updateNotificationStatus(notificationId, 'sent');
 
-    logger.info('✅ Test notification saved to database:', { notificationId });
+    logger.info('✅ Test notification saved to database with template rendering:', {
+      notificationId,
+      channel,
+      note: 'Email sending happens via RabbitMQ consumer in production',
+    });
 
     res.status(201).json({
       success: true,
-      message: 'Test notification created and saved to database',
+      message: 'Test notification created and saved to database with template rendering',
       notificationId,
       eventType,
       userId,
+      channel,
       status: 'sent',
       timestamp: new Date().toISOString(),
-      note: 'This endpoint is for testing only. Production notifications should come from message broker events.',
+      note: {
+        testing: 'This endpoint is for testing template rendering and database storage only',
+        production: 'Real notifications are sent via RabbitMQ message broker → notification consumer → email delivery',
+        flow: 'Order Service → RabbitMQ → Notification Service (consumer) → Email/SMS/etc',
+      },
     });
   } catch (error) {
     logger.error('❌ Error creating test notification:', error);
@@ -81,30 +82,6 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
       message: 'Failed to create notification',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-  }
-}
-
-// Helper function to generate notification messages
-function generateNotificationMessage(eventData: any): string {
-  switch (eventData.eventType) {
-    case EventTypes.ORDER_PLACED:
-      return `Your order #${eventData.data?.orderNumber || 'N/A'} has been placed successfully!`;
-    case EventTypes.ORDER_DELIVERED:
-      return `Your order #${eventData.data?.orderNumber || 'N/A'} has been delivered!`;
-    case EventTypes.ORDER_CANCELLED:
-      return `Your order #${eventData.data?.orderNumber || 'N/A'} has been cancelled.`;
-    case EventTypes.PAYMENT_RECEIVED:
-      return `Payment of $${eventData.data?.amount || 'N/A'} has been received for your order.`;
-    case EventTypes.PAYMENT_FAILED:
-      return `Payment failed for your order. Please try again.`;
-    case EventTypes.PROFILE_PASSWORD_CHANGED:
-      return `Your password has been changed successfully.`;
-    case EventTypes.PROFILE_NOTIFICATION_PREFERENCES_UPDATED:
-      return `Your notification preferences have been updated.`;
-    case EventTypes.PROFILE_BANK_DETAILS_UPDATED:
-      return `Your bank details have been updated successfully.`;
-    default:
-      return `You have a new notification: ${eventData.eventType}`;
   }
 }
 
@@ -205,15 +182,45 @@ export async function getNotificationStats(req: Request, res: Response): Promise
   }
 }
 
-export function getNotifications(req: Request, res: Response): void {
-  logger.info('Get notifications endpoint accessed');
+export async function getNotifications(req: Request, res: Response): Promise<void> {
+  try {
+    logger.info('Get all notifications endpoint accessed');
 
-  // For now, return a simple response (we'll add database queries later)
-  res.json({
-    success: true,
-    message: 'Notifications endpoint - deprecated, use /users/:userId/notifications instead',
-    notifications: [],
-  });
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const status = req.query.status as string;
+    const eventType = req.query.eventType as string;
+
+    // Get all notifications with optional filters
+    const notifications = await notificationService.getAllNotifications({
+      limit,
+      offset,
+      status,
+      eventType,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'All notifications retrieved successfully',
+      data: notifications,
+      pagination: {
+        limit,
+        offset,
+        count: notifications.length,
+      },
+      filters: {
+        status: status || 'all',
+        eventType: eventType || 'all',
+      },
+    });
+  } catch (error) {
+    logger.error('Error getting all notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get notifications',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 }
 
 // Test email service endpoint
