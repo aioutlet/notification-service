@@ -6,7 +6,26 @@ const router = Router();
 const monitoringController = new MonitoringController();
 
 /**
- * @route GET /metrics
+ * @route GET /api/monitoring
+ * @desc Get available monitoring endpoints
+ * @access Public
+ */
+router.get('/', (req, res) => {
+  res.json({
+    message: '🔍 Monitoring API',
+    endpoints: {
+      health: '/api/monitoring/health',
+      liveness: '/api/monitoring/health/live',
+      readiness: '/api/monitoring/health/ready',
+      metrics: '/api/monitoring/metrics',
+      stats: '/api/monitoring/stats',
+      checkComponent: '/api/monitoring/health/check/:component',
+    },
+  });
+});
+
+/**
+ * @route GET /api/monitoring/metrics
  * @desc Get service metrics (Prometheus format available with ?format=prometheus)
  * @access Protected - requires authentication
  */
@@ -18,28 +37,28 @@ router.get(
 );
 
 /**
- * @route GET /health
+ * @route GET /api/monitoring/health
  * @desc Get comprehensive health status
  * @access Public
  */
 router.get('/health', monitoringController.getHealth.bind(monitoringController));
 
 /**
- * @route GET /health/live
+ * @route GET /api/monitoring/health/live
  * @desc Kubernetes liveness probe endpoint
  * @access Public
  */
 router.get('/health/live', monitoringController.getLiveness.bind(monitoringController));
 
 /**
- * @route GET /health/ready
+ * @route GET /api/monitoring/health/ready
  * @desc Kubernetes readiness probe endpoint
  * @access Public
  */
 router.get('/health/ready', monitoringController.getReadiness.bind(monitoringController));
 
 /**
- * @route GET /stats
+ * @route GET /api/monitoring/stats
  * @desc Get simplified service statistics
  * @access Protected - requires authentication
  */
@@ -51,7 +70,7 @@ router.get(
 );
 
 /**
- * @route POST /health/check/:component
+ * @route POST /api/monitoring/health/check/:component
  * @desc Manual health check for specific component
  * @access Protected - requires authentication
  */

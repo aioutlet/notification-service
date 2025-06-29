@@ -4,6 +4,11 @@ import logger from './utils/logger';
 import MessageConsumer from './services/message-consumer';
 import DatabaseService from './services/database.service';
 import { Server } from 'http';
+import { handleUncaughtException, handleUnhandledRejection } from './middlewares/error.middleware';
+
+// Handle uncaught exceptions and unhandled rejections
+process.on('uncaughtException', handleUncaughtException);
+process.on('unhandledRejection', handleUnhandledRejection);
 
 const messageConsumer = new MessageConsumer();
 let server: Server;
@@ -17,9 +22,12 @@ const startServer = async (): Promise<void> => {
       logger.info(`📍 Server running on http://${config.server.host}:${config.server.port}`);
       logger.info(`🌍 Environment: ${config.server.env}`);
       logger.info(`📊 Available endpoints:`);
-      logger.info(`   GET / - Welcome message`);
-      logger.info(`   GET /version - API version`);
-      logger.info(`   GET /health - Health check`);
+      logger.info(`   GET /api/home/ - Welcome message`);
+      logger.info(`   GET /api/home/version - API version`);
+      logger.info(`   GET /api/home/health - Health check`);
+      logger.info(`   GET /api/monitoring/health - Detailed health check`);
+      logger.info(`   GET /api/monitoring/metrics - Service metrics`);
+      logger.info(`   GET /api/monitoring/stats - Service statistics`);
       logger.info(`   POST /api/notifications - Send notification (testing only)`);
     });
 

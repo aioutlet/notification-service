@@ -19,6 +19,7 @@ import {
   securityErrorHandler,
   sanitizeInput,
 } from './middlewares/security.middleware';
+import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware';
 
 const app = express();
 const monitoring = MonitoringService.getInstance();
@@ -44,18 +45,18 @@ if (config.server.env !== 'test') {
   app.use(requestLogger);
 }
 
-// Rate limiting - apply globally (except for health endpoints)
+// Rate limiting - apply globally (except for health and monitoring endpoints)
 app.use((req, res, next) => {
-  // Skip rate limiting for health and metrics endpoints
-  if (req.path.startsWith('/health') || req.path.startsWith('/metrics') || req.path === '/ready') {
+  // Skip rate limiting for monitoring and home endpoints
+  if (req.path.startsWith('/api/monitoring') || req.path.startsWith('/api/home')) {
     return next();
   }
   rateLimiter(req, res, next);
 });
 
 app.use((req, res, next) => {
-  // Skip speed limiting for health and metrics endpoints
-  if (req.path.startsWith('/health') || req.path.startsWith('/metrics') || req.path === '/ready') {
+  // Skip speed limiting for monitoring and home endpoints
+  if (req.path.startsWith('/api/monitoring') || req.path.startsWith('/api/home')) {
     return next();
   }
   speedLimiter(req, res, next);
@@ -64,97 +65,21 @@ app.use((req, res, next) => {
 // API-specific rate limiting
 app.use('/api', apiRateLimiter);
 
-// Health checks and system endpoints (no rate limiting)
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    version: process.env.npm_package_version || '1.0.0',
-  });
-});
-
-app.get('/ready', (req, res) => {
-  // This endpoint is enhanced in server.ts for shutdown detection
-  res.status(200).json({
-    status: 'ready',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-app.get('/version', (req, res) => {
-  res.json({
-    name: 'notification-service',
-    version: process.env.npm_package_version || '1.0.0',
-    environment: config.server.env,
-    node: process.version,
-  });
-});
-
-// Welcome endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: '🔔 Notification Service API',
-    version: process.env.npm_package_version || '1.0.0',
-    environment: config.server.env,
-    endpoints: {
-      health: '/health',
-      ready: '/ready',
-      version: '/version',
-      metrics: '/metrics',
-      stats: '/stats',
-      notifications: '/api/notifications',
-      templates: '/api/templates',
-    },
-  });
-});
-
 // Monitoring and metrics routes (no additional rate limiting)
-app.use('/', monitoringRoutes);
+app.use('/api/monitoring', monitoringRoutes);
 
 // Routes
 app.use('/api/home', homeRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/templates', templateRoutes);
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-    path: req.originalUrl,
-    method: req.method,
-    timestamp: new Date().toISOString(),
-  });
-});
+// 404 handler for unknown routes
+app.use('*', notFoundHandler);
 
-// Security error handler
+// Security error handler (keep before global error handler)
 app.use(securityErrorHandler);
 
-// Global error handler
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Unhandled error:', {
-    error: error.message,
-    stack: error.stack,
-    path: req.path,
-    method: req.method,
-    ip: req.ip,
-  });
-
-  // Don't expose stack traces in production
-  const isDevelopment = config.server.env === 'development';
-
-  res.status(error.status || 500).json({
-    success: false,
-    message: error.message || 'Internal server error',
-    error: isDevelopment
-      ? {
-          stack: error.stack,
-          details: error,
-        }
-      : undefined,
-    timestamp: new Date().toISOString(),
-  });
-});
+// Global error handler (must be last)
+app.use(globalErrorHandler);
 
 export default app;

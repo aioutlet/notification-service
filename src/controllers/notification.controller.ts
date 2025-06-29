@@ -6,6 +6,7 @@ import EmailService from '../services/email.service';
 import { createSuccessResponse } from '../middlewares/validation.middleware';
 import { CreateNotificationInput, NotificationFiltersInput, EmailTestInput } from '../validators/schemas';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import ErrorResponse from '../utils/ErrorResponse';
 
 const notificationService = new NotificationService();
 const emailService = new EmailService();
@@ -64,11 +65,7 @@ export async function sendNotification(req: Request, res: Response): Promise<voi
     res.status(201).json(response);
   } catch (error) {
     logger.error('❌ Error creating test notification:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create notification',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    throw error; // Let global error handler handle it
   }
 }
 
@@ -80,11 +77,7 @@ export async function getUserNotifications(req: AuthRequest, res: Response): Pro
     const offset = parseInt(req.query.offset as string) || 0;
 
     if (!userId) {
-      res.status(400).json({
-        success: false,
-        message: 'userId is required',
-      });
-      return;
+      throw ErrorResponse.badRequest('userId is required');
     }
 
     // Authorization check: Users can only access their own notifications, admins can access any
@@ -99,11 +92,7 @@ export async function getUserNotifications(req: AuthRequest, res: Response): Pro
         ip: req.ip,
         path: req.path,
       });
-      res.status(403).json({
-        success: false,
-        message: 'Access denied. You can only view your own notifications.',
-      });
-      return;
+      throw ErrorResponse.forbidden('Access denied. You can only view your own notifications.');
     }
 
     logger.info('✅ Authorized notification access:', {
@@ -128,11 +117,7 @@ export async function getUserNotifications(req: AuthRequest, res: Response): Pro
     });
   } catch (error) {
     logger.error('Error getting user notifications:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get notifications',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    throw error; // Let global error handler handle it
   }
 }
 
@@ -142,21 +127,13 @@ export async function getNotificationById(req: Request, res: Response): Promise<
     const { notificationId } = req.params;
 
     if (!notificationId) {
-      res.status(400).json({
-        success: false,
-        message: 'notificationId is required',
-      });
-      return;
+      throw ErrorResponse.badRequest('notificationId is required');
     }
 
     const notification = await notificationService.getNotificationById(notificationId);
 
     if (!notification) {
-      res.status(404).json({
-        success: false,
-        message: 'Notification not found',
-      });
-      return;
+      throw ErrorResponse.notFound('Notification not found');
     }
 
     res.status(200).json({
@@ -166,11 +143,7 @@ export async function getNotificationById(req: Request, res: Response): Promise<
     });
   } catch (error) {
     logger.error('Error getting notification by ID:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get notification',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    throw error; // Let global error handler handle it
   }
 }
 
@@ -188,11 +161,7 @@ export async function getNotificationStats(req: Request, res: Response): Promise
     });
   } catch (error) {
     logger.error('Error getting notification stats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get notification stats',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    throw error; // Let global error handler handle it
   }
 }
 
@@ -229,11 +198,7 @@ export async function getNotifications(req: Request, res: Response): Promise<voi
     });
   } catch (error) {
     logger.error('Error getting all notifications:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get notifications',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    throw error; // Let global error handler handle it
   }
 }
 
@@ -252,21 +217,11 @@ export async function testEmailService(req: Request, res: Response): Promise<voi
     // First check if email service is configured and enabled
     const providerInfo = emailService.getProviderInfo();
     if (!providerInfo.enabled) {
-      res.status(400).json({
-        success: false,
-        message: 'Email service is disabled. Check EMAIL_ENABLED in configuration.',
-        emailService: providerInfo,
-      });
-      return;
+      throw ErrorResponse.serviceUnavailable('Email service is disabled. Check EMAIL_ENABLED in configuration.');
     }
 
     if (!providerInfo.configured) {
-      res.status(400).json({
-        success: false,
-        message: 'Email service is not properly configured. Check SMTP settings.',
-        emailService: providerInfo,
-      });
-      return;
+      throw ErrorResponse.badRequest('Email service is not properly configured. Check SMTP settings.');
     }
 
     const emailSent = await emailService.sendNotificationEmail(to, subject, message, 'test', {
@@ -286,11 +241,6 @@ export async function testEmailService(req: Request, res: Response): Promise<voi
     });
   } catch (error) {
     logger.error('Error testing email service:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to test email service',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      emailService: emailService.getProviderInfo(),
-    });
+    throw error; // Let global error handler handle it
   }
 }
