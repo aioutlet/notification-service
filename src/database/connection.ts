@@ -21,14 +21,14 @@ class Database {
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'notification_service',
-      connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10')
+      connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
     };
   }
 
   async connect(): Promise<void> {
     try {
       this.pool = mysql.createPool(this.config);
-      
+
       // Test the connection
       const connection = await this.pool.getConnection();
       logger.info('Database connected successfully');
