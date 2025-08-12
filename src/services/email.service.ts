@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import config from '../config/index';
 import logger from '../utils/logger';
-import MonitoringService from './monitoring.service';
 
 export interface EmailOptions {
   to: string;
@@ -22,10 +21,8 @@ export interface EmailProvider {
 class SMTPEmailProvider implements EmailProvider {
   private transporter: nodemailer.Transporter | null = null;
   private configured: boolean = false;
-  private monitoring: MonitoringService;
 
   constructor() {
-    this.monitoring = MonitoringService.getInstance();
     this.initializeTransporter();
   }
 
@@ -64,7 +61,6 @@ class SMTPEmailProvider implements EmailProvider {
 
     if (!this.configured || !this.transporter) {
       logger.error('❌ SMTP provider not configured. Cannot send email.');
-      this.monitoring.recordEmailFailed();
       return false;
     }
 
@@ -82,9 +78,6 @@ class SMTPEmailProvider implements EmailProvider {
       const info = await this.transporter.sendMail(mailOptions);
       const duration = Date.now() - startTime;
 
-      // Record successful email metrics
-      this.monitoring.recordEmailSent(duration);
-
       logger.info('📧 Email sent successfully:', {
         to: options.to,
         subject: options.subject,
@@ -95,9 +88,6 @@ class SMTPEmailProvider implements EmailProvider {
       return true;
     } catch (error) {
       const duration = Date.now() - startTime;
-
-      // Record failed email metrics
-      this.monitoring.recordEmailFailed();
 
       logger.error('❌ Failed to send email:', {
         to: options.to,

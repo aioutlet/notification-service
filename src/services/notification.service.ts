@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import DatabaseService from './database.service';
 import TemplateService, { TemplateVariables } from './template.service';
-import MonitoringService from './monitoring.service';
 import logger from '../utils/logger';
 import { NotificationEvent } from '../events/event-types';
 
@@ -29,12 +28,10 @@ export interface NotificationRecord {
 class NotificationService {
   private db: DatabaseService;
   private templateService: TemplateService;
-  private monitoring: MonitoringService;
 
   constructor() {
     this.db = DatabaseService.getInstance();
     this.templateService = new TemplateService();
-    this.monitoring = MonitoringService.getInstance();
   }
 
   async createNotification(
@@ -53,7 +50,6 @@ class NotificationService {
         // Create a basic notification without template
         const result = await this.createBasicNotification(eventData, channel, notificationId);
         const duration = Date.now() - startTime;
-        this.monitoring.recordNotificationSent(channel, duration);
         return result;
       }
 
@@ -103,9 +99,6 @@ class NotificationService {
       await this.db.query(query, values);
       const duration = Date.now() - startTime;
 
-      // Record metrics
-      this.monitoring.recordNotificationSent(channel, duration);
-
       logger.info('💾 Notification saved to database with template:', {
         notificationId,
         eventType: eventData.eventType,
@@ -118,9 +111,6 @@ class NotificationService {
       return notificationId;
     } catch (error) {
       const duration = Date.now() - startTime;
-
-      // Record failure metrics
-      this.monitoring.recordNotificationFailed(channel, 'database_error');
 
       logger.error('❌ Failed to save notification to database:', error);
       throw error;

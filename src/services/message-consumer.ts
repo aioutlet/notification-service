@@ -5,7 +5,6 @@ import { NotificationEvent, EventTypes } from '../events/event-types';
 import NotificationService from './notification.service';
 import DatabaseService from './database.service';
 import EmailService from './email.service';
-import MonitoringService from './monitoring.service';
 
 interface RetryConfig {
   maxRetries: number;
@@ -27,7 +26,6 @@ class MessageConsumer {
   private notificationService: NotificationService;
   private dbService: DatabaseService;
   private emailService: EmailService;
-  private monitoring: MonitoringService;
   private isShuttingDown = false;
 
   // Retry configuration
@@ -46,7 +44,6 @@ class MessageConsumer {
     this.notificationService = new NotificationService();
     this.dbService = DatabaseService.getInstance();
     this.emailService = new EmailService();
-    this.monitoring = MonitoringService.getInstance();
   }
 
   async connect(): Promise<void> {
@@ -192,11 +189,7 @@ class MessageConsumer {
 
       try {
         const stats = await this.getQueueStats();
-        this.monitoring.updateQueueSizes(
-          stats.mainQueue.messageCount,
-          stats.retryQueue.messageCount,
-          stats.deadLetterQueue.messageCount
-        );
+        // Queue stats available for monitoring if needed
       } catch (error) {
         logger.warn('⚠️ Failed to update queue metrics:', error);
       }
@@ -225,7 +218,7 @@ class MessageConsumer {
 
       // Record successful processing metrics
       const duration = Date.now() - startTime;
-      this.monitoring.recordMessageProcessed(duration);
+      // this.monitoring.recordMessageProcessed(duration);
 
       // Acknowledge the message on success
       this.channel.ack(message);
@@ -238,7 +231,7 @@ class MessageConsumer {
       const duration = Date.now() - startTime;
 
       // Record failure metrics
-      this.monitoring.recordMessageFailed();
+      // this.monitoring.recordMessageFailed();
 
       logger.error('❌ Error processing message:', {
         messageId,
@@ -264,7 +257,7 @@ class MessageConsumer {
       );
 
       // Record retry metrics
-      this.monitoring.recordMessageRetried();
+      // this.monitoring.recordMessageRetried();
 
       logger.info(`🔄 Retrying message (attempt ${retryCount}/${this.retryConfig.maxRetries}) in ${delay}ms`);
 
@@ -289,7 +282,7 @@ class MessageConsumer {
       this.channel.nack(message, false, false);
     } else {
       // Record dead letter metrics
-      this.monitoring.recordMessageDeadLetter();
+      // this.monitoring.recordMessageDeadLetter();
 
       logger.error(`💀 Message exceeded max retries (${this.retryConfig.maxRetries}), sending to DLQ`);
 

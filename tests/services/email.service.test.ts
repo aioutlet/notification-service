@@ -5,21 +5,14 @@ import config from '../../src/config/index';
 // Mock dependencies
 jest.mock('nodemailer');
 jest.mock('../../src/utils/logger');
-jest.mock('../../src/services/monitoring.service');
 jest.mock('../../src/config/index');
 
 // Import after mocking
 import logger from '../../src/utils/logger';
-import MonitoringService from '../../src/services/monitoring.service';
 
 // Type the mocked modules
 const mockedNodemailer = nodemailer as jest.Mocked<typeof nodemailer>;
 const mockedConfig = config as jest.Mocked<typeof config>;
-const mockMonitoringService = {
-  recordEmailSent: jest.fn(),
-  recordEmailFailed: jest.fn(),
-  getInstance: jest.fn(),
-};
 
 // Mock transporter
 const mockTransporter = {
@@ -32,13 +25,8 @@ describe('EmailService', () => {
     jest.clearAllMocks();
 
     // Reset all mock functions
-    mockMonitoringService.recordEmailSent.mockReset();
-    mockMonitoringService.recordEmailFailed.mockReset();
     mockTransporter.sendMail.mockReset();
     mockTransporter.verify.mockReset();
-
-    // Setup monitoring service mock
-    (MonitoringService.getInstance as jest.Mock).mockReturnValue(mockMonitoringService);
 
     // Setup nodemailer mock
     mockedNodemailer.createTransport.mockReturnValue(mockTransporter as any);
@@ -135,7 +123,6 @@ describe('EmailService', () => {
         text: 'Test message content',
         html: expect.stringContaining('Test message content'),
       });
-      expect(mockMonitoringService.recordEmailSent).toHaveBeenCalledWith(expect.any(Number));
       expect(logger.info).toHaveBeenCalledWith(
         '📧 Email sent successfully:',
         expect.objectContaining({
@@ -213,7 +200,6 @@ describe('EmailService', () => {
       );
 
       expect(result).toBe(false);
-      expect(mockMonitoringService.recordEmailFailed).toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalledWith(
         '❌ Failed to send email:',
         expect.objectContaining({
