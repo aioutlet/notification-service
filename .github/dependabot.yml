@@ -1,0 +1,132 @@
+# Dependabot configuration for notification-service
+# This configuration will automatically check for dependency updates
+# and create pull requests when new versions are available.
+#
+# For more information, see:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  # Enable version updates for npm dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Etc/UTC'
+    open-pull-requests-limit: 10
+    assignees:
+      - 'notification-service-team'
+    commit-message:
+      prefix: 'deps'
+      prefix-development: 'deps-dev'
+      include: 'scope'
+    labels:
+      - 'dependencies'
+    # Group related updates together to reduce PR noise
+    groups:
+      # Group TypeScript-related updates
+      typescript-ecosystem:
+        patterns:
+          - 'typescript'
+          - '@types/*'
+          - 'ts-*'
+          - 'tsx'
+        update-types:
+          - 'minor'
+          - 'patch'
+      # Group Express and related middleware
+      express-ecosystem:
+        patterns:
+          - 'express'
+          - '@types/express'
+          - 'cors'
+          - '@types/cors'
+          - 'helmet'
+          - 'compression'
+          - '@types/compression'
+          - 'cookie-parser'
+          - '@types/cookie-parser'
+          - 'express-rate-limit'
+          - '@types/express-rate-limit'
+          - 'express-slow-down'
+        update-types:
+          - 'minor'
+          - 'patch'
+      # Group testing-related updates
+      testing-ecosystem:
+        patterns:
+          - 'jest'
+          - '@types/jest'
+          - 'supertest'
+          - '@types/supertest'
+          - 'ts-jest'
+        update-types:
+          - 'minor'
+          - 'patch'
+      # Group database-related updates
+      database-ecosystem:
+        patterns:
+          - 'mysql2'
+          - '@types/mysql2'
+        update-types:
+          - 'minor'
+          - 'patch'
+      # Group messaging and communication
+      messaging:
+        patterns:
+          - 'amqplib'
+          - '@types/amqplib'
+          - 'nodemailer'
+          - '@types/nodemailer'
+        update-types:
+          - 'minor'
+          - 'patch'
+      # Group utilities
+      utilities:
+        patterns:
+          - 'uuid'
+          - '@types/uuid'
+          - 'zod'
+          - 'dotenv'
+          - 'jsonwebtoken'
+          - '@types/jsonwebtoken'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # Enable version updates for Docker
+  - package-ecosystem: 'docker'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Etc/UTC'
+    open-pull-requests-limit: 5
+    assignees:
+      - 'notification-service-team'
+    commit-message:
+      prefix: 'docker'
+      include: 'scope'
+    labels:
+      - 'docker'
+      - 'infrastructure'
+
+  # Enable version updates for GitHub Actions (if any workflows are added later)
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Etc/UTC'
+    open-pull-requests-limit: 5
+    assignees:
+      - 'notification-service-team'
+    commit-message:
+      prefix: 'ci'
+      include: 'scope'
+    labels:
+      - 'github-actions'
