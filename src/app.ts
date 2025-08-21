@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import homeRoutes from './routes/home.routes';
-import notificationRoutes from './routes/notification.routes';
-import templateRoutes from './routes/template.routes';
-import * as operationalController from './controllers/operational.controller';
-import logger from './utils/logger';
-import config from './config/index';
+import homeRoutes from './routes/home.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import templateRoutes from './routes/template.routes.js';
+import * as operationalController from './controllers/operational.controller.js';
+import logger from './utils/logger.js';
+import config from './config/index.js';
 import {
   rateLimiter,
   apiRateLimiter,
@@ -17,8 +17,8 @@ import {
   requestLogger,
   securityErrorHandler,
   sanitizeInput,
-} from './middlewares/security.middleware';
-import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware';
+} from './middlewares/security.middleware.js';
+import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 
 const app = express();
 

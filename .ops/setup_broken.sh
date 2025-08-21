@@ -1,34 +1,25 @@
 #!/bin/bash
 
 # Notification Service Environment Setup
-# This script sets up the notification service for any environment by reading from .env files
+# This script sets up the notification service using simplified configuration (.env file)
 
 set -e
 
 SERVICE_NAME="notification-service"
 SERVICE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# Default environment
-ENV_NAME="development"
-
-# Parse command line arguments
+# Parse command line arguments (simplified - only help)
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -e|--env)
-            ENV_NAME="$2"
-            shift 2
-            ;;
         -h|--help)
             echo "Usage: $0 [options]"
-            echo "Options:"
-            echo "  -e, --env ENV_NAME    Environment name (default: development)"
-            echo "                        Looks for .env.ENV_NAME file"
-            echo "  -h, --help           Show this help message"
             echo ""
-            echo "Examples:"
-            echo "  $0                   # Uses .env (development)"
-            echo "  $0 -e production     # Uses .env.production"
-            echo "  $0 -e staging        # Uses .env.staging"
+            echo "This script sets up the notification service for development."
+            echo "Uses .env file for configuration (Node.js standard)."
+            echo "Database and dependencies are managed via Docker Compose."
+            echo ""
+            echo "Options:"
+            echo "  -h, --help           Show this help message"
             exit 0
             ;;
         *)
@@ -39,9 +30,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "🚀 Setting up $SERVICE_NAME for $ENV_NAME environment..."
-
-# Color codes for output
+# Color codes for logging
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -64,24 +53,30 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Function to load environment variables from .env file
+# Function to load environment variables from .env file (Node.js standard)
+# Note: This function is kept for reference but not used during setup
+# The actual Node.js application will load these variables when it runs
 load_env_file() {
-    local env_file=""
+    local env_file="$SERVICE_PATH/.env"
     
-    if [ "$ENV_NAME" = "development" ]; then
-        env_file="$SERVICE_PATH/.env.development"
-    else
-        env_file="$SERVICE_PATH/.env.$ENV_NAME"
-    fi
-    
-    log_info "Loading environment variables from $(basename $env_file)..."
+    log_info "Environment file ready at: .env (Node.js standard)"
+    log_info "The Node.js application will load these variables at runtime"
     
     if [ ! -f "$env_file" ]; then
-        log_error "Environment file not found: $env_file"
-        log_info "Available environment files:"
-        ls -la "$SERVICE_PATH"/.env* 2>/dev/null || log_info "No .env files found"
-        exit 1
+        log_warning "Environment file not found: $env_file"
+        log_info "Run setup to create the template"
+        return 1
     fi
+    
+        log_success "Environment configuration is ready for Node.js application"
+}
+
+# OS detection function
+detect_os() {
+}
+
+# OS detection function
+}
     
     # Load environment variables safely
     set -a  # automatically export all variables
@@ -117,8 +112,8 @@ load_env_file() {
         exit 1
     fi
     
-    log_info "Environment: $NODE_ENV"
-    log_info "Port: $PORT"
+    log_info "Environment: development (Node.js standard)"
+    log_info "Port: 3003"
     log_info "Database: $DB_NAME"
     log_info "Database User: $DB_USER"
 }
@@ -193,27 +188,18 @@ install_dependencies() {
     fi
 }
 
-# Setup database
+# Setup database (managed by Docker Compose)
 setup_database() {
-    log_info "Setting up database: $DB_NAME"
+    local DB_NAME="notification_service_dev"
+    local DB_USER="notification_user"
+    local DB_HOST="localhost"
     
-    # Check if database exists and create if not
-    if ! mysql -h ${DB_HOST:-localhost} -P ${DB_PORT:-3306} -u root -p"${MYSQL_ROOT_PASSWORD:-password}" -e "USE $DB_NAME;" 2>/dev/null; then
-        log_info "Creating database: $DB_NAME"
-        mysql -h ${DB_HOST:-localhost} -P ${DB_PORT:-3306} -u root -p"${MYSQL_ROOT_PASSWORD:-password}" -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
-        log_success "Database created successfully"
-    else
-        log_info "Database $DB_NAME already exists"
-    fi
+    log_info "Database setup managed by Docker Compose"
+    log_info "Database: $DB_NAME"
+    log_info "User: $DB_USER"
+    log_info "Host: $DB_HOST (Docker containers will handle database creation)"
     
-    # Create user if not exists
-    mysql -h ${DB_HOST:-localhost} -P ${DB_PORT:-3306} -u root -p"${MYSQL_ROOT_PASSWORD:-password}" -e "
-        CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD';
-        GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';
-        FLUSH PRIVILEGES;
-    " > /dev/null 2>&1
-    
-    log_success "Database user configured"
+    log_success "Database configuration ready for Docker Compose"
 }
 
 # Run database setup scripts
@@ -259,24 +245,18 @@ validate_setup() {
     return 0
 }
 
-# Create environment file if it doesn't exist
+# Create environment file if it doesn't exist (Node.js standard)
 create_env_template() {
-    local env_file=""
-    
-    if [ "$ENV_NAME" = "development" ]; then
-        env_file="$SERVICE_PATH/.env.development"
-    else
-        env_file="$SERVICE_PATH/.env.$ENV_NAME"
-    fi
+    local env_file="$SERVICE_PATH/.env"
     
     if [ ! -f "$env_file" ]; then
-        log_info "Creating environment template: $(basename $env_file)"
+        log_info "Creating .env template (Node.js standard)"
         
         cat > "$env_file" << EOF
-# Notification Service Environment Configuration - $ENV_NAME
+# Notification Service Environment Configuration
 
 # Server Configuration
-NODE_ENV=$ENV_NAME
+NODE_ENV=development
 PORT=3003
 HOST=localhost
 API_VERSION=1.0.0
@@ -284,36 +264,39 @@ API_VERSION=1.0.0
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=notification_service_dev
+DB_NAME=notification_service_${ENV_NAME}
 DB_USER=notification_user
-DB_PASSWORD=notification_pass
+DB_PASSWORD=notification_${ENV_NAME}_$(openssl rand -hex 8)
+MYSQL_ROOT_PASSWORD=mysql_root_${ENV_NAME}_$(openssl rand -hex 12)
 
 # Message Broker Configuration
-RABBITMQ_URL=amqp://guest:guest@localhost:5672
-RABBITMQ_EXCHANGE_ORDER=order.events
-RABBITMQ_EXCHANGE_USER=user.events
-RABBITMQ_QUEUE_NOTIFICATIONS=notifications
+RABBITMQ_USER=admin
+RABBITMQ_PASS=admin_${ENV_NAME}_$(openssl rand -hex 8)
+RABBITMQ_URL=amqp://\${RABBITMQ_USER}:\${RABBITMQ_PASS}@localhost:5672
+RABBITMQ_EXCHANGE_ORDER=order.events.${ENV_NAME}
+RABBITMQ_EXCHANGE_USER=user.events.${ENV_NAME}
+RABBITMQ_QUEUE_NOTIFICATIONS=notifications.${ENV_NAME}
 
-# Email Configuration
-EMAIL_ENABLED=true
+# Email Configuration (CHANGE THESE!)
+EMAIL_ENABLED=false
 EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp.gmail.com
+SMTP_HOST=sandbox.smtp.mailtrap.io
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-EMAIL_FROM_NAME=AI Outlet Notifications
-EMAIL_FROM_ADDRESS=noreply@aioutlet.com
+SMTP_USER=CHANGE_ME
+SMTP_PASS=CHANGE_ME
+EMAIL_FROM_NAME=AI Outlet Notifications (${ENV_NAME})
+EMAIL_FROM_ADDRESS=noreply-${ENV_NAME}@aioutlet.com
 
-# SMS Configuration (Twilio)
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_PHONE_NUMBER=
+# SMS Configuration (Twilio) - CONFIGURE THESE!
+TWILIO_ACCOUNT_SID=CHANGE_ME
+TWILIO_AUTH_TOKEN=CHANGE_ME
+TWILIO_PHONE_NUMBER=CHANGE_ME
 
 # Push Notification Configuration
 PUSH_NOTIFICATION_ENABLED=false
-FCM_SERVER_KEY=
-FCM_PROJECT_ID=
+FCM_SERVER_KEY=CHANGE_ME
+FCM_PROJECT_ID=CHANGE_ME
 
 # Webhook Configuration
 WEBHOOK_ENABLED=true
@@ -321,7 +304,7 @@ WEBHOOK_TIMEOUT=10000
 WEBHOOK_RETRY_ATTEMPTS=3
 
 # Authentication Configuration
-JWT_SECRET=your-jwt-secret-key-here
+JWT_SECRET=jwt_${ENV_NAME}_$(openssl rand -hex 32)
 
 # CORS Configuration
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
@@ -367,23 +350,20 @@ EOF
 
 # Main execution
 main() {
+    echo "🚀 Setting up notification-service for development..."
     echo "=========================================="
     echo "🔔 Notification Service Environment Setup"
     echo "=========================================="
     
     OS=$(detect_os)
     log_info "Detected OS: $OS"
-    log_info "Target Environment: $ENV_NAME"
+    log_info "Using Node.js standard .env configuration"
     
     # Create environment file if it doesn't exist
     create_env_template
     
-    # Load environment variables
-    load_env_file
-    
     # Check prerequisites
     check_nodejs
-    check_mysql
     
     # Install dependencies
     install_dependencies
@@ -400,12 +380,32 @@ main() {
         log_success "✅ Notification Service setup completed successfully!"
         echo "=========================================="
         echo ""
+        
+        # Start services with Docker Compose
+        log_info "🐳 Starting services with Docker Compose..."
+        if docker-compose up -d; then
+            log_success "Services started successfully"
+            echo ""
+            log_info "⏳ Waiting for services to be ready..."
+            sleep 15
+            
+            # Check service health
+            if docker-compose ps | grep -q "Up.*healthy"; then
+                log_success "Services are healthy and ready"
+            else
+                log_warning "Services may still be starting up"
+            fi
+        else
+            log_error "Failed to start services with Docker Compose"
+            return 1
+        fi
+        echo ""
         echo "� Setup Summary:"
-        echo "  • Environment: $NODE_ENV"
-        echo "  • Port: $PORT"
-        echo "  • Database: $DB_NAME"
-        echo "  • Health Check: http://localhost:$PORT/health"
-        echo "  • API Base: http://localhost:$PORT/api"
+        echo "  • Environment: development"
+        echo "  • Port: 3003"
+        echo "  • Database: notification_service_dev"
+        echo "  • Health Check: http://localhost:3003/health"
+        echo "  • API Base: http://localhost:3003/api"
         echo ""
         echo "📧 Notification Features:"
         echo "  • Email Notifications (SMTP)"

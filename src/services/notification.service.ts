@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
-import DatabaseService from './database.service';
-import TemplateService, { TemplateVariables } from './template.service';
-import logger from '../utils/logger';
-import { NotificationEvent } from '../events/event-types';
+import DatabaseService from './database.service.js';
+import TemplateService, { TemplateVariables } from './template.service.js';
+import logger from '../utils/logger.js';
+import { NotificationEvent } from '../events/event-types.js';
 
 export interface NotificationRecord {
   id?: number;

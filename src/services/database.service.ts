@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
-import config from '../config/index';
-import logger from '../utils/logger';
+import config from '../config/index.js';
+import logger from '../utils/logger.js';
 
 class DatabaseService {
   private pool: mysql.Pool;

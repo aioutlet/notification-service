@@ -3,7 +3,7 @@
  * These endpoints are used by monitoring systems, load balancers, and DevOps tools
  */
 
-import DatabaseService from '../services/database.service';
+import DatabaseService from '../services/database.service.js';
 
 export function health(req: any, res: any) {
   res.json({

@@ -6,16 +6,16 @@ import {
   getNotificationById,
   getNotificationStats,
   testEmailService,
-} from '../controllers/notification.controller';
-import { validateBody, validateQuery, validateParams } from '../middlewares/validation.middleware';
+} from '../controllers/notification.controller.js';
+import { validateBody, validateQuery, validateParams } from '../middlewares/validation.middleware.js';
 import {
   createNotificationSchema,
   notificationFiltersSchema,
   emailTestSchema,
   notificationIdSchema,
   userIdSchema,
-} from '../validators/schemas';
-import AuthMiddleware from '../middlewares/auth.middleware';
+} from '../validators/schemas.js';
+import AuthMiddleware from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 

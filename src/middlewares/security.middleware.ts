@@ -4,8 +4,8 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import { Request, Response, NextFunction } from 'express';
-import config from '../config/index';
-import logger from '../utils/logger';
+import config from '../config/index.js';
+import logger from '../utils/logger.js';
 
 // Rate limiting configuration
 export const rateLimiter = rateLimit({

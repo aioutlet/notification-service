@@ -1,5 +1,5 @@
-import DatabaseService from './database.service';
-import logger from '../utils/logger';
+import DatabaseService from './database.service.js';
+import logger from '../utils/logger.js';
 
 export interface NotificationTemplate {
   id?: number;

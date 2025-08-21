@@ -1,10 +1,10 @@
-import app from './app';
-import config from './config/index';
-import logger from './utils/logger';
-import MessageConsumer from './services/message-consumer';
-import DatabaseService from './services/database.service';
+import app from './app.js';
+import config from './config/index.js';
+import logger from './utils/logger.js';
+import MessageConsumer from './services/message-consumer.js';
+import DatabaseService from './services/database.service.js';
 import { Server } from 'http';
-import { handleUncaughtException, handleUnhandledRejection } from './middlewares/error.middleware';
+import { handleUncaughtException, handleUnhandledRejection } from './middlewares/error.middleware.js';
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', handleUncaughtException);

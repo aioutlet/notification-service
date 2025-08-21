@@ -1,10 +1,10 @@
 import amqp from 'amqplib';
-import config from '../config/index';
-import logger from '../utils/logger';
-import { NotificationEvent, EventTypes } from '../events/event-types';
-import NotificationService from './notification.service';
-import DatabaseService from './database.service';
-import EmailService from './email.service';
+import config from '../config/index.js';
+import logger from '../utils/logger.js';
+import { NotificationEvent, EventTypes } from '../events/event-types.js';
+import NotificationService from './notification.service.js';
+import DatabaseService from './database.service.js';
+import EmailService from './email.service.js';
 
 interface RetryConfig {
   maxRetries: number;

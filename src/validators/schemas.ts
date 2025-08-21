@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EventTypes } from '../events/event-types';
+import { EventTypes } from '../events/event-types.js';
 
 // Base schemas for common fields
 export const emailSchema = z.string().email('Invalid email format');

@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { EventTypes } from '../events/event-types';
-import logger from '../utils/logger';
-import NotificationService from '../services/notification.service';
-import EmailService from '../services/email.service';
-import { createSuccessResponse } from '../middlewares/validation.middleware';
-import { CreateNotificationInput, NotificationFiltersInput, EmailTestInput } from '../validators/schemas';
-import { AuthRequest } from '../middlewares/auth.middleware';
-import ErrorResponse from '../utils/ErrorResponse';
+import { EventTypes } from '../events/event-types.js';
+import logger from '../utils/logger.js';
+import NotificationService from '../services/notification.service.js';
+import EmailService from '../services/email.service.js';
+import { createSuccessResponse } from '../middlewares/validation.middleware.js';
+import { CreateNotificationInput, NotificationFiltersInput, EmailTestInput } from '../validators/schemas.js';
+import { AuthRequest } from '../middlewares/auth.middleware.js';
+import ErrorResponse from '../utils/ErrorResponse.js';
 
 const notificationService = new NotificationService();
 const emailService = new EmailService();

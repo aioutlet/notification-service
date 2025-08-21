@@ -1,5 +1,5 @@
 import express from 'express';
-import { getWelcomeMessage, getVersion, health } from '../controllers/home.controller';
+import { getWelcomeMessage, getVersion } from '../controllers/home.controller.js';
 
 const router = express.Router();
 
@@ -8,8 +8,5 @@ router.get('/', getWelcomeMessage);
 
 // Version route
 router.get('/version', getVersion);
-
-// Health check route
-router.get('/health', health);
 
 export default router;

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import TemplateService, { NotificationTemplate } from '../services/template.service';
-import logger from '../utils/logger';
+import TemplateService, { NotificationTemplate } from '../services/template.service.js';
+import logger from '../utils/logger.js';
 
 const templateService = new TemplateService();
 

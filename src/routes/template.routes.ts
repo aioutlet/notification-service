@@ -6,16 +6,16 @@ import {
   updateTemplate,
   deleteTemplate,
   renderTemplateTest,
-} from '../controllers/template.controller';
-import { validateBody, validateParams } from '../middlewares/validation.middleware';
+} from '../controllers/template.controller.js';
+import { validateBody, validateParams } from '../middlewares/validation.middleware.js';
 import {
   createTemplateSchema,
   updateTemplateSchema,
   renderTemplateTestSchema,
   templateIdSchema,
   templateParamsSchema,
-} from '../validators/schemas';
-import AuthMiddleware, { protect, admin } from '../middlewares/auth.middleware';
+} from '../validators/schemas.js';
+import AuthMiddleware, { protect, admin } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 

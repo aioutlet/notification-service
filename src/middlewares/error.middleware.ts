@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import jwt from 'jsonwebtoken';
-import logger from '../utils/logger';
-import config from '../config/index';
-import ErrorResponse from '../utils/ErrorResponse';
+import logger from '../utils/logger.js';
+import config from '../config/index.js';
+import ErrorResponse from '../utils/ErrorResponse.js';
 
 /**
  * Global Error Handler Middleware

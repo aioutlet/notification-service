@@ -20,7 +20,7 @@ RUN npm run build
 FROM node:18-alpine AS production
 
 # Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init curl
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs
@@ -49,8 +49,8 @@ EXPOSE 3003
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node dist/scripts/health-check.js || exit 1
+  CMD curl -f http://localhost:3003/health || exit 1
 
 # Start the application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/src/server.js"]
