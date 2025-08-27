@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import ErrorResponse from '../../src/utils/ErrorResponse';
 
 // Mock dependencies
 jest.mock('../../src/utils/logger');

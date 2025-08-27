@@ -43,7 +43,7 @@ describe('DatabaseService', () => {
     mockConnection.rollback.mockReset();
 
     mockPool.getConnection.mockReset();
-    mockPool.execute.mockReset();
+    mockConnection.execute.mockReset();
     mockPool.end.mockReset();
 
     // Setup config mock
@@ -146,36 +146,36 @@ describe('DatabaseService', () => {
 
     it('should execute query successfully without parameters', async () => {
       const mockResults = [{ id: 1, name: 'test' }];
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query('SELECT * FROM users');
 
       expect(result).toEqual(mockResults);
-      expect(mockPool.execute).toHaveBeenCalledWith('SELECT * FROM users', undefined);
+      expect(mockConnection.execute).toHaveBeenCalledWith('SELECT * FROM users', []);
     });
 
     it('should execute query successfully with parameters', async () => {
       const mockResults = [{ id: 1, name: 'John' }];
       const sql = 'SELECT * FROM users WHERE id = ?';
       const params = [1];
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query(sql, params);
 
       expect(result).toEqual(mockResults);
-      expect(mockPool.execute).toHaveBeenCalledWith(sql, params);
+      expect(mockConnection.execute).toHaveBeenCalledWith(sql, params);
     });
 
     it('should handle query execution errors', async () => {
       const mockError = new Error('Table does not exist');
       const sql = 'SELECT * FROM nonexistent_table';
-      mockPool.execute.mockRejectedValue(mockError);
+      mockConnection.execute.mockRejectedValue(mockError);
 
       await expect(dbService.query(sql)).rejects.toThrow('Table does not exist');
 
       expect(logger.error).toHaveBeenCalledWith('❌ Database query failed:', {
         sql,
-        params: undefined,
+        params: [],
         error: mockError,
       });
     });
@@ -184,24 +184,24 @@ describe('DatabaseService', () => {
       const mockResults: any[] = [];
       const sql = 'SELECT * FROM users WHERE active = ?';
       const params: any[] = [];
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query(sql, params);
 
       expect(result).toEqual(mockResults);
-      expect(mockPool.execute).toHaveBeenCalledWith(sql, params);
+      expect(mockConnection.execute).toHaveBeenCalledWith(sql, params);
     });
 
     it('should handle complex query parameters', async () => {
       const mockResults = [{ count: 5 }];
       const sql = 'SELECT COUNT(*) as count FROM users WHERE age > ? AND city = ? AND active = ?';
       const params = [25, 'New York', true];
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query(sql, params);
 
       expect(result).toEqual(mockResults);
-      expect(mockPool.execute).toHaveBeenCalledWith(sql, params);
+      expect(mockConnection.execute).toHaveBeenCalledWith(sql, params);
       expect(logger.error).not.toHaveBeenCalled();
     });
   });
@@ -362,12 +362,12 @@ describe('DatabaseService', () => {
       const maliciousInput = ["'; DROP TABLE users; --"];
       const sql = 'SELECT * FROM users WHERE name = ?';
       const mockResults: any[] = []; // No results as expected for parameterized query
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query(sql, maliciousInput);
 
       expect(result).toEqual(mockResults);
-      expect(mockPool.execute).toHaveBeenCalledWith(sql, maliciousInput);
+      expect(mockConnection.execute).toHaveBeenCalledWith(sql, maliciousInput);
       // The SQL injection should be safely handled by parameterized queries
     });
 
@@ -375,19 +375,19 @@ describe('DatabaseService', () => {
       const mockResults = [{ id: 1, name: null }];
       const sql = 'SELECT * FROM users WHERE name = ? OR description = ?';
       const params = [null, undefined];
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query(sql, params);
 
       expect(result).toEqual(mockResults);
-      expect(mockPool.execute).toHaveBeenCalledWith(sql, params);
+      expect(mockConnection.execute).toHaveBeenCalledWith(sql, params);
     });
 
     it('should handle empty result sets', async () => {
       const mockResults: any[] = [];
       const sql = 'SELECT * FROM users WHERE id = ?';
       const params = [999999]; // Non-existent ID
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query(sql, params);
 
@@ -401,12 +401,12 @@ describe('DatabaseService', () => {
       const sql = `SELECT ${longFieldList} FROM users WHERE id = ?`;
       const params = [1];
       const mockResults = [{ field0: 'value0', field1: 'value1' }];
-      mockPool.execute.mockResolvedValue([mockResults, {}] as any);
+      mockConnection.execute.mockResolvedValue([mockResults, {}] as any);
 
       const result = await dbService.query(sql, params);
 
       expect(result).toEqual(mockResults);
-      expect(mockPool.execute).toHaveBeenCalledWith(sql, params);
+      expect(mockConnection.execute).toHaveBeenCalledWith(sql, params);
     });
   });
 });

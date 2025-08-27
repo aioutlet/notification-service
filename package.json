@@ -12,6 +12,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "db:seed": "tsx database/scripts/seed.ts",
     "db:clear": "tsx database/scripts/clear.ts"
   },
@@ -53,6 +55,9 @@
     "@types/mysql2": "github:types/mysql2",
     "@types/node": "^20.19.1",
     "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.34.0",
     "jest": "^30.0.3",
     "supertest": "^7.1.1",
     "ts-jest": "^29.4.0",

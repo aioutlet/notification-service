@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { EventTypes } from '../events/event-types.js';
 import logger from '../utils/logger.js';
 import NotificationService from '../services/notification.service.js';
 import EmailService from '../services/email.service.js';
 import { createSuccessResponse } from '../middlewares/validation.middleware.js';
-import { CreateNotificationInput, NotificationFiltersInput, EmailTestInput } from '../validators/schemas.js';
+import { CreateNotificationInput } from '../validators/schemas.js';
 import { AuthRequest } from '../middlewares/auth.middleware.js';
 import ErrorResponse from '../utils/ErrorResponse.js';
 

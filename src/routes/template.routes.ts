@@ -15,7 +15,7 @@ import {
   templateIdSchema,
   templateParamsSchema,
 } from '../validators/schemas.js';
-import AuthMiddleware, { protect, admin } from '../middlewares/auth.middleware.js';
+import AuthMiddleware from '../middlewares/auth.middleware.js';
 
 const router = Router();
 

@@ -7,10 +7,10 @@
 class ErrorResponse extends Error {
   public statusCode: number;
   public code: string;
-  public details?: any;
+  public details?: unknown;
   public isOperational: boolean;
 
-  constructor(message: string, statusCode: number = 500, code: string = 'INTERNAL_ERROR', details?: any) {
+  constructor(message: string, statusCode: number = 500, code: string = 'INTERNAL_ERROR', details?: unknown) {
     super(message);
 
     this.name = 'ErrorResponse';
@@ -42,7 +42,7 @@ class ErrorResponse extends Error {
   /**
    * Static factory methods for common errors
    */
-  static badRequest(message: string, details?: any) {
+  static badRequest(message: string, details?: unknown) {
     return new ErrorResponse(message, 400, 'BAD_REQUEST', details);
   }
 
@@ -58,11 +58,11 @@ class ErrorResponse extends Error {
     return new ErrorResponse(message, 404, 'NOT_FOUND');
   }
 
-  static conflict(message: string, details?: any) {
+  static conflict(message: string, details?: unknown) {
     return new ErrorResponse(message, 409, 'CONFLICT', details);
   }
 
-  static validation(message: string, details?: any) {
+  static validation(message: string, details?: unknown) {
     return new ErrorResponse(message, 422, 'VALIDATION_ERROR', details);
   }
 
@@ -70,7 +70,7 @@ class ErrorResponse extends Error {
     return new ErrorResponse(message, 429, 'RATE_LIMIT_EXCEEDED');
   }
 
-  static internal(message: string = 'Internal server error', details?: any) {
+  static internal(message: string = 'Internal server error', details?: unknown) {
     return new ErrorResponse(message, 500, 'INTERNAL_ERROR', details);
   }
 

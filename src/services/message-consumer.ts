@@ -1,7 +1,7 @@
 import amqp from 'amqplib';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
-import { NotificationEvent, EventTypes } from '../events/event-types.js';
+import { EventTypes } from '../events/event-types.js';
 import NotificationService from './notification.service.js';
 import DatabaseService from './database.service.js';
 import EmailService from './email.service.js';
@@ -188,7 +188,7 @@ class MessageConsumer {
       }
 
       try {
-        const stats = await this.getQueueStats();
+        await this.getQueueStats();
         // Queue stats available for monitoring if needed
       } catch (error) {
         logger.warn('⚠️ Failed to update queue metrics:', error);

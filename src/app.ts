@@ -5,7 +5,6 @@ import homeRoutes from './routes/home.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import templateRoutes from './routes/template.routes.js';
 import * as operationalController from './controllers/operational.controller.js';
-import logger from './utils/logger.js';
 import config from './config/index.js';
 import {
   rateLimiter,

@@ -89,7 +89,7 @@ class TemplateService {
         template.is_active,
       ];
 
-      const result = await this.db.query(query, values);
+      const result = await this.db.execute(query, values);
 
       logger.info('📄 Template created:', {
         templateId: result.insertId,
@@ -97,7 +97,7 @@ class TemplateService {
         channel: template.channel,
       });
 
-      return result.insertId;
+      return result.insertId || 0;
     } catch (error) {
       logger.error('❌ Failed to create template:', error);
       throw error;
@@ -145,11 +145,11 @@ class TemplateService {
 
       const query = `UPDATE notification_templates SET ${setParts.join(', ')} WHERE id = ?`;
 
-      const result = await this.db.query(query, values);
+      const result = await this.db.execute(query, values);
 
       logger.info('📄 Template updated:', { templateId: id, affectedRows: result.affectedRows });
 
-      return result.affectedRows > 0;
+      return (result.affectedRows || 0) > 0;
     } catch (error) {
       logger.error('❌ Failed to update template:', { templateId: id, error });
       throw error;
@@ -159,11 +159,11 @@ class TemplateService {
   async deleteTemplate(id: number): Promise<boolean> {
     try {
       const query = 'DELETE FROM notification_templates WHERE id = ?';
-      const result = await this.db.query(query, [id]);
+      const result = await this.db.execute(query, [id]);
 
       logger.info('📄 Template deleted:', { templateId: id, affectedRows: result.affectedRows });
 
-      return result.affectedRows > 0;
+      return (result.affectedRows || 0) > 0;
     } catch (error) {
       logger.error('❌ Failed to delete template:', { templateId: id, error });
       throw error;

@@ -5,7 +5,7 @@ import { EventTypes } from '../events/event-types.js';
 export const emailSchema = z.string().email('Invalid email format');
 export const phoneSchema = z
   .string()
-  .regex(/^\+?[\d\s\-\(\)]+$/, 'Invalid phone number format')
+  .regex(/^\+?[\d\s\-()]+$/, 'Invalid phone number format')
   .optional();
 export const uuidSchema = z.string().uuid('Invalid UUID format');
 

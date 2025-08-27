@@ -1,7 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import helmet from 'helmet';
-import cors from 'cors';
 import compression from 'compression';
 import { Request, Response, NextFunction } from 'express';
 import config from '../config/index.js';
@@ -63,7 +62,7 @@ export const speedLimiter = slowDown({
 
 // CORS configuration
 export const corsOptions = {
-  origin: function (origin: string | undefined, callback: Function) {
+  origin: function (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
 
@@ -177,7 +176,7 @@ export const securityErrorHandler = (err: Error, req: Request, res: Response, ne
 // Input sanitization middleware
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
   // Basic sanitization - remove null bytes and trim strings
-  const sanitizeObject = (obj: any): any => {
+  const sanitizeObject = (obj: unknown): unknown => {
     if (typeof obj === 'string') {
       return obj.replace(/\0/g, '').trim();
     }
@@ -185,10 +184,10 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
       return obj.map(sanitizeObject);
     }
     if (obj && typeof obj === 'object') {
-      const sanitized: any = {};
+      const sanitized: Record<string, unknown> = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          sanitized[key] = sanitizeObject(obj[key]);
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          sanitized[key] = sanitizeObject((obj as Record<string, unknown>)[key]);
         }
       }
       return sanitized;
@@ -200,10 +199,10 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     req.body = sanitizeObject(req.body);
   }
   if (req.query) {
-    req.query = sanitizeObject(req.query);
+    req.query = sanitizeObject(req.query) as any;
   }
   if (req.params) {
-    req.params = sanitizeObject(req.params);
+    req.params = sanitizeObject(req.params) as any;
   }
 
   next();

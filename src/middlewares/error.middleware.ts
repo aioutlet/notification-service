@@ -22,7 +22,7 @@ interface ErrorWithCode extends Error {
 /**
  * Main error handling middleware
  */
-export const globalErrorHandler = (err: ErrorWithCode, req: Request, res: Response, next: NextFunction): void => {
+export const globalErrorHandler = (err: ErrorWithCode, req: Request, res: Response, _next: NextFunction): void => {
   // Generate unique error ID for tracking
   const errorId = generateErrorId();
 
@@ -32,7 +32,7 @@ export const globalErrorHandler = (err: ErrorWithCode, req: Request, res: Respon
   // Don't expose sensitive information in production
   const isDevelopment = config.server.env === 'development';
 
-  let error = { ...err };
+  const error = { ...err };
   error.message = err.message;
 
   // Handle specific error types
@@ -274,10 +274,10 @@ export const handleUncaughtException = (err: Error): void => {
 /**
  * Handle unhandled promise rejections
  */
-export const handleUnhandledRejection = (reason: any, promise: Promise<any>): void => {
+export const handleUnhandledRejection = (reason: unknown, _promise: Promise<unknown>): void => {
   logger.error('Unhandled Promise Rejection - shutting down gracefully:', {
-    reason: reason?.message || reason,
-    stack: reason?.stack,
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
     timestamp: new Date().toISOString(),
   });
 

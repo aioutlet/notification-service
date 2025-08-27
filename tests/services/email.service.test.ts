@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import EmailService, { EmailOptions, EmailProvider } from '../../src/services/email.service';
+import EmailService from '../../src/services/email.service';
 import config from '../../src/config/index';
 
 // Mock dependencies

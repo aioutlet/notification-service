@@ -1,11 +1,7 @@
-/**
- * Operational/Infrastructure endpoints
- * These endpoints are used by monitoring systems, load balancers, and DevOps tools
- */
-
+import { Request, Response } from 'express';
 import DatabaseService from '../services/database.service.js';
 
-export function health(req: any, res: any) {
+export function health(req: Request, res: Response) {
   res.json({
     status: 'healthy',
     service: 'notification-service',
@@ -14,7 +10,7 @@ export function health(req: any, res: any) {
   });
 }
 
-export async function readiness(req: any, res: any) {
+export async function readiness(req: Request, res: Response) {
   try {
     // Check database connectivity
     const dbService = DatabaseService.getInstance();
@@ -29,7 +25,7 @@ export async function readiness(req: any, res: any) {
         // Add other dependency checks as needed
       },
     });
-  } catch (error) {
+  } catch {
     res.status(503).json({
       status: 'not ready',
       service: 'notification-service',
@@ -39,7 +35,7 @@ export async function readiness(req: any, res: any) {
   }
 }
 
-export function liveness(req: any, res: any) {
+export function liveness(req: Request, res: Response) {
   // Liveness probe - just check if the app is running
   res.json({
     status: 'alive',
@@ -49,7 +45,7 @@ export function liveness(req: any, res: any) {
   });
 }
 
-export function metrics(req: any, res: any) {
+export function metrics(req: Request, res: Response) {
   // Basic metrics endpoint (could be extended with prometheus metrics)
   const memUsage = process.memoryUsage();
 

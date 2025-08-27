@@ -4,6 +4,32 @@ import TemplateService, { TemplateVariables } from './template.service.js';
 import logger from '../utils/logger.js';
 import { NotificationEvent } from '../events/event-types.js';
 
+// Database row types
+interface NotificationRow {
+  id: number;
+  notification_id: string;
+  event_type: string;
+  user_id: string;
+  recipient_email?: string;
+  recipient_phone?: string;
+  subject?: string;
+  message: string;
+  channel: 'email' | 'sms' | 'push' | 'webhook';
+  status: 'pending' | 'sent' | 'failed' | 'retry';
+  attempts: number;
+  sent_at?: Date;
+  failed_at?: Date;
+  error_message?: string;
+  event_data?: string; // From DB, this is usually a string
+  template_id?: number;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+interface NotificationStats {
+  [status: string]: number;
+}
+
 export interface NotificationRecord {
   id?: number;
   notification_id: string;
@@ -19,7 +45,7 @@ export interface NotificationRecord {
   sent_at?: Date;
   failed_at?: Date;
   error_message?: string;
-  event_data?: any;
+  event_data?: unknown;
   template_id?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -49,7 +75,6 @@ class NotificationService {
         logger.warn(`⚠️ No template found for event: ${eventData.eventType}, channel: ${channel}`);
         // Create a basic notification without template
         const result = await this.createBasicNotification(eventData, channel, notificationId);
-        const duration = Date.now() - startTime;
         return result;
       }
 
@@ -110,8 +135,6 @@ class NotificationService {
 
       return notificationId;
     } catch (error) {
-      const duration = Date.now() - startTime;
-
       logger.error('❌ Failed to save notification to database:', error);
       throw error;
     }
@@ -127,7 +150,7 @@ class NotificationService {
         UPDATE notifications 
         SET status = ?, attempts = attempts + 1, updated_at = CURRENT_TIMESTAMP
       `;
-      const values: any[] = [status];
+      const values: (string | undefined)[] = [status];
 
       if (status === 'sent') {
         query += ', sent_at = CURRENT_TIMESTAMP';
@@ -170,7 +193,7 @@ class NotificationService {
       const results = await this.db.query(query, [userId]);
 
       // Handle event_data properly - it might be a string or already an object
-      return results.map((row: any) => ({
+      return (results as NotificationRow[]).map((row: NotificationRow) => ({
         ...row,
         event_data: this.parseEventData(row.event_data),
       }));
@@ -188,14 +211,14 @@ class NotificationService {
         return null;
       }
 
-      return results[0] as NotificationRecord;
+      return (results as NotificationRow[])[0] as NotificationRecord;
     } catch (error) {
       logger.error('❌ Failed to get notification by ID:', { notificationId, error });
       throw error;
     }
   }
 
-  async getNotificationStats(userId?: string): Promise<any> {
+  async getNotificationStats(userId?: string): Promise<NotificationStats> {
     try {
       let query = `
         SELECT 
@@ -203,7 +226,7 @@ class NotificationService {
           COUNT(*) as count
         FROM notifications
       `;
-      const values: any[] = [];
+      const values: string[] = [];
 
       if (userId) {
         query += ' WHERE user_id = ?';
@@ -214,17 +237,20 @@ class NotificationService {
 
       const results = await this.db.query(query, values);
 
-      return results.reduce((stats: any, row: any) => {
-        stats[row.status] = parseInt(row.count);
-        return stats;
-      }, {});
+      return (results as { status: string; count: string | number }[]).reduce(
+        (stats: NotificationStats, row: { status: string; count: string | number }) => {
+          stats[row.status] = typeof row.count === 'string' ? parseInt(row.count) : row.count;
+          return stats;
+        },
+        {}
+      );
     } catch (error) {
       logger.error('❌ Failed to get notification stats:', error);
       throw error;
     }
   }
 
-  private parseEventData(eventData: any): any {
+  private parseEventData(eventData: unknown): unknown {
     if (!eventData) {
       return null;
     }
@@ -238,7 +264,7 @@ class NotificationService {
     if (typeof eventData === 'string') {
       try {
         return JSON.parse(eventData);
-      } catch (error) {
+      } catch {
         logger.warn('⚠️ Failed to parse event_data as JSON, returning as string:', { eventData });
         return eventData;
       }
