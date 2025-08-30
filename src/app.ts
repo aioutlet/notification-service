@@ -18,8 +18,12 @@ import {
   sanitizeInput,
 } from './middlewares/security.middleware.js';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
+import { correlationIdMiddleware } from './middlewares/correlationId.middleware.js';
 
 const app = express();
+
+// Correlation ID middleware - must be first to ensure all requests have correlation ID
+app.use(correlationIdMiddleware);
 
 // Security middleware - must be applied first
 app.use(helmetConfig); // Security headers
