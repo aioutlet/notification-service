@@ -8,8 +8,8 @@
 FROM node:24-alpine AS base
 WORKDIR /app
 
-# Install dumb-init for proper signal handling and curl for health checks
-RUN apk add --no-cache dumb-init curl
+# Install dumb-init for proper signal handling, curl for health checks, and git for npm
+RUN apk add --no-cache dumb-init curl git
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -90,7 +90,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/server.js"]
 
 # Labels for better image management
 LABEL maintainer="AIOutlet Team"
