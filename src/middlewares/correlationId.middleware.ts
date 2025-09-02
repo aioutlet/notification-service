@@ -23,9 +23,6 @@ export const correlationIdMiddleware = (req: RequestWithCorrelationId, res: Resp
   // Add to response locals for template access if needed
   res.locals.correlationId = correlationId;
 
-  // Log the request with correlation ID
-  console.log(`[${correlationId}] ${req.method} ${req.path} - Processing request`);
-
   next();
 };
 

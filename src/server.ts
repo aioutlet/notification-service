@@ -1,10 +1,16 @@
+// Initialize tracing FIRST - this must be the very first import
+import './tracing-init.js';
+
 import app from './app.js';
 import config from './config/index.js';
-import logger from './utils/logger.js';
+import Logger from './observability/logging/logger.js';
 import MessageConsumer from './services/message-consumer.js';
 import DatabaseService from './services/database.service.js';
 import { Server } from 'http';
 import { handleUncaughtException, handleUnhandledRejection } from './middlewares/error.middleware.js';
+
+// Create logger instance
+const logger = new Logger();
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', handleUncaughtException);
@@ -37,10 +43,10 @@ const startServer = async (): Promise<void> => {
     server.headersTimeout = 66000; // 66 seconds
 
     // Start RabbitMQ consumer
-    logger.info(`🔌 Connecting to RabbitMQ...`);
-    await messageConsumer.connect();
-    await messageConsumer.startConsuming();
-    logger.info(`🎯 Message consumer started - listening for events`);
+    logger.info(`🔌 Skipping RabbitMQ connection for observability testing...`);
+    // await messageConsumer.connect();
+    // await messageConsumer.startConsuming();
+    logger.info(`🎯 Message consumer setup skipped for testing`);
 
     // Enhanced graceful shutdown
     const gracefulShutdown = async (signal: string) => {
@@ -98,7 +104,7 @@ const startServer = async (): Promise<void> => {
     });
 
     process.on('unhandledRejection', (reason, promise) => {
-      logger.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+      logger.error('💥 Unhandled Rejection', { reason, promise: String(promise) });
       gracefulShutdown('UNHANDLED_REJECTION');
     });
 

@@ -13,12 +13,12 @@ import {
   corsOptions,
   helmetConfig,
   compressionMiddleware,
-  requestLogger,
   securityErrorHandler,
   sanitizeInput,
 } from './middlewares/security.middleware.js';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { correlationIdMiddleware } from './middlewares/correlationId.middleware.js';
+import { requestLoggingMiddleware, errorLoggingMiddleware } from './middlewares/request.middleware.js';
 
 const app = express();
 
@@ -42,7 +42,7 @@ app.use(sanitizeInput);
 
 // Request logging
 if (config.server.env !== 'test') {
-  app.use(requestLogger);
+  app.use(requestLoggingMiddleware);
 }
 
 // Rate limiting - apply globally (except for health and home endpoints)
@@ -81,6 +81,9 @@ app.use('*', notFoundHandler);
 
 // Security error handler (keep before global error handler)
 app.use(securityErrorHandler);
+
+// Observability error handler
+app.use(errorLoggingMiddleware);
 
 // Global error handler (must be last)
 app.use(globalErrorHandler);

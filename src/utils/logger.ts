@@ -1,24 +1,23 @@
-class Logger {
-  private getTimestamp(): string {
-    return new Date().toISOString();
-  }
+import Logger from '../observability/logging/logger.js';
 
-  info(message: string, ...args: unknown[]): void {
-    console.log(`[${this.getTimestamp()}] INFO: ${message}`, ...args);
-  }
+// Create and export the logger instance with proper configuration
+export const logger = new Logger({
+  serviceName: 'notification-service',
+  version: '1.0.0',
+  enableConsole: true,
+  enableFile: true,
+  logLevel: 'INFO',
+  format: 'json',
+  enableTracing: true,
+  filePath: './logs/notification-service.log',
+});
 
-  error(message: string, ...args: unknown[]): void {
-    console.error(`[${this.getTimestamp()}] ERROR: ${message}`, ...args);
-  }
+// Create a stream object with a 'write' function that will be used by morgan
+export const morganStream = {
+  write: (message: string) => {
+    logger.info(message.trim()); // Use info instead of http since Logger doesn't have http method
+  },
+};
 
-  warn(message: string, ...args: unknown[]): void {
-    console.warn(`[${this.getTimestamp()}] WARN: ${message}`, ...args);
-  }
-
-  debug(message: string, ...args: unknown[]): void {
-    console.debug(`[${this.getTimestamp()}] DEBUG: ${message}`, ...args);
-  }
-}
-
-const logger = new Logger();
+// Export default logger
 export default logger;
