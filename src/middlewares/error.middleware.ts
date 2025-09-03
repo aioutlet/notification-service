@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import jwt from 'jsonwebtoken';
-import logger from '../utils/logger.js';
+import logger from '../observability/logging/index.js';
 import config from '../config/index.js';
 import ErrorResponse from '../utils/ErrorResponse.js';
 

@@ -4,11 +4,11 @@ import config from '../../src/config/index';
 
 // Mock dependencies
 jest.mock('nodemailer');
-jest.mock('../../src/utils/logger');
+jest.mock('../../src/observability/logging/index.js');
 jest.mock('../../src/config/index');
 
 // Import after mocking
-import logger from '../../src/utils/logger';
+import logger from '../../src/observability/logging/index.js';
 
 // Type the mocked modules
 const mockedNodemailer = nodemailer as jest.Mocked<typeof nodemailer>;

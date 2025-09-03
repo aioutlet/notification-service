@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
+import { Pool, PoolClient, QueryResult } from 'pg';
 import config from '../config/index.js';
-import logger from '../utils/logger.js';
+import logger from '../observability/logging/index.js';
 
 // Type for database operation results (INSERT, UPDATE, DELETE)
 interface DatabaseResult {

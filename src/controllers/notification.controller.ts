@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import logger from '../utils/logger.js';
+import logger from '../observability/logging/index.js';
 import NotificationService from '../services/notification.service.js';
 import EmailService from '../services/email.service.js';
 import { createSuccessResponse } from '../middlewares/validation.middleware.js';

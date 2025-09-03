@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 
 // Mock dependencies
-jest.mock('../../src/utils/logger');
+jest.mock('../../src/observability/logging/index.js');
 
 // Mock the service before importing the controller
 const mockTemplateService = {
@@ -27,7 +27,7 @@ import {
   testTemplateRendering,
   renderTemplateTest,
 } from '../../src/controllers/template.controller';
-import logger from '../../src/utils/logger';
+import logger from '../../src/observability/logging/index.js';
 import { NotificationTemplate } from '../../src/services/template.service';
 
 describe('Template Controller', () => {

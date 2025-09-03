@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
-import logger from '../utils/logger.js';
+import logger from '../observability/logging/index.js';
 
 export interface ValidationError {
   field: string;

@@ -1,6 +1,6 @@
-import amqp from 'amqplib';
+import { Channel, Connection, connect } from 'amqplib';
 import config from '../config/index.js';
-import logger from '../utils/logger.js';
+import logger from '../observability/logging/index.js';
 import { EventTypes } from '../events/event-types.js';
 import NotificationService from './notification.service.js';
 import DatabaseService from './database.service.js';
@@ -49,7 +49,7 @@ class MessageConsumer {
   async connect(): Promise<void> {
     try {
       logger.info('Connecting to RabbitMQ...');
-      this.connection = await amqp.connect(config.rabbitmq.url);
+      this.connection = await connect(config.rabbitmq.url);
 
       // Handle connection events
       this.connection.on('error', (err: Error) => {

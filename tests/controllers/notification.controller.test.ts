@@ -4,7 +4,7 @@ import ErrorResponse from '../../src/utils/ErrorResponse';
 import { AuthRequest } from '../../src/middlewares/auth.middleware';
 
 // Mock dependencies
-jest.mock('../../src/utils/logger');
+jest.mock('../../src/observability/logging/index.js');
 jest.mock('../../src/middlewares/validation.middleware');
 
 // Mock the services before importing the controller
@@ -39,7 +39,7 @@ import {
   getNotifications,
   testEmailService,
 } from '../../src/controllers/notification.controller';
-import logger from '../../src/utils/logger';
+import logger from '../../src/observability/logging/index.js';
 
 const mockCreateSuccessResponse = createSuccessResponse as jest.MockedFunction<typeof createSuccessResponse>;
 

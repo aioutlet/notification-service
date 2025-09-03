@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import logger from '../utils/logger.js';
+import logger from '../observability/logging/index.js';
 import asyncHandler from './asyncHandler.js';
 
 interface AuthRequest extends Request {

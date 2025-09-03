@@ -4,11 +4,11 @@ import config from '../../src/config/index';
 
 // Mock dependencies
 jest.mock('mysql2/promise');
-jest.mock('../../src/utils/logger');
+jest.mock('../../src/observability/logging/index.js');
 jest.mock('../../src/config/index');
 
 // Import after mocking
-import logger from '../../src/utils/logger';
+import logger from '../../src/observability/logging/index.js';
 
 // Type the mocked modules
 const mockedMySQL = mysql as jest.Mocked<typeof mysql>;

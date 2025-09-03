@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import DatabaseService from './database.service.js';
+import EmailService from './email.service.js';
 import TemplateService, { TemplateVariables } from './template.service.js';
-import logger from '../utils/logger.js';
+import logger from '../observability/logging/index.js';
 import { NotificationEvent } from '../events/event-types.js';
 
 // Database row types

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { getWelcomeMessage, getVersion, health } from '../../src/controllers/home.controller';
-import logger from '../../src/utils/logger';
+import logger from '../../src/observability/logging/index.js';
 
 // Mock dependencies
-jest.mock('../../src/utils/logger');
+jest.mock('../../src/observability/logging/index.js');
 jest.mock('../../src/config/index', () => ({
   server: {
     env: 'test',

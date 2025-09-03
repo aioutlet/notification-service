@@ -6,7 +6,7 @@ import { createJsonFormat, createConsoleFormat } from './formatters.js';
  * Logger class implementing the unified logging schema
  */
 class Logger {
-  private winston: winston.Logger;
+  private winston!: winston.Logger;
   private config: LoggerConfig;
 
   constructor(config: Partial<LoggerConfig> = {}) {
@@ -68,7 +68,7 @@ class Logger {
     if (value === undefined || value === null) {
       return defaultValue;
     }
-    return value === 'true' || value === true;
+    return value === 'true';
   }
 
   /**
