@@ -209,10 +209,13 @@ function sendErrorResponse(res: Response, statusCode: number, error: any, errorI
  * Log error with context
  */
 function logError(err: ErrorWithCode, req: Request, errorId: string): void {
+  // Environment-based stack trace logging
+  const isDevelopment = config.server.env === 'development';
+
   const logData = {
     errorId,
     message: err.message,
-    stack: err.stack,
+    stack: isDevelopment ? err.stack : 'Stack trace hidden in production',
     statusCode: err.statusCode,
     code: err.code,
     method: req.method,
