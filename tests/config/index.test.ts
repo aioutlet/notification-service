@@ -51,12 +51,13 @@ describe('Config', () => {
 
       expect(config.rabbitmq).toEqual({
         url: 'amqp://guest:guest@localhost:5672',
+        exchange: 'aioutlet.events',
         exchanges: {
           order: 'order.events',
           user: 'user.events',
         },
         queues: {
-          notifications: 'notifications',
+          notifications: 'notification-service.queue',
         },
       });
 
@@ -157,6 +158,7 @@ describe('Config', () => {
 
       expect(config.rabbitmq).toEqual({
         url: 'amqp://user:pass@rabbitmq.example.com:5672',
+        exchange: 'aioutlet.events',
         exchanges: {
           order: 'prod.order.events',
           user: 'prod.user.events',

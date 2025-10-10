@@ -73,15 +73,17 @@ describe('EmailService', () => {
       expect(logger.info).toHaveBeenCalledWith('📧 Email service is disabled via configuration');
     });
 
-    it('should disable service when SMTP credentials are missing', () => {
+    it('should allow anonymous SMTP when credentials are missing (for Mailpit/testing)', () => {
       mockedConfig.email.smtp.auth.user = '';
       mockedConfig.email.smtp.auth.pass = '';
 
       const emailService = new EmailService();
 
-      expect(emailService.isEnabled()).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('⚠️ SMTP credentials not configured. Email sending will be disabled.');
-      expect(logger.warn).toHaveBeenCalledWith('⚠️ Email service is enabled but provider is not properly configured');
+      // Service should still be enabled for anonymous SMTP (Mailpit support)
+      expect(emailService.isEnabled()).toBe(true);
+      expect(logger.warn).toHaveBeenCalledWith(
+        '⚠️ SMTP credentials not configured. Using anonymous SMTP (suitable for Mailpit/testing).'
+      );
     });
 
     it('should handle transporter initialization errors', () => {
@@ -267,14 +269,15 @@ describe('EmailService', () => {
       expect(logger.info).toHaveBeenCalledWith('📧 Email service test skipped (service disabled)');
     });
 
-    it('should return false when provider is not configured', async () => {
+    it('should allow testing with anonymous SMTP (no credentials)', async () => {
       mockedConfig.email.smtp.auth.user = '';
       const unconfiguredService = new EmailService();
 
       const result = await unconfiguredService.testEmailService();
 
-      expect(result).toBe(false);
-      expect(mockTransporter.verify).not.toHaveBeenCalled();
+      // Should still be able to test connection with anonymous SMTP
+      expect(result).toBe(true);
+      expect(mockTransporter.verify).toHaveBeenCalled();
     });
   });
 
@@ -304,29 +307,33 @@ describe('EmailService', () => {
       });
     });
 
-    it('should return correct provider info when not configured', () => {
+    it('should return correct provider info with anonymous SMTP', () => {
       mockedConfig.email.smtp.auth.user = '';
       const emailService = new EmailService();
 
       const info = emailService.getProviderInfo();
 
+      // Anonymous SMTP (Mailpit) is still configured and enabled
       expect(info).toEqual({
         provider: 'smtp',
-        configured: false,
-        enabled: false,
+        configured: true,
+        enabled: true,
       });
     });
   });
 
   describe('SMTP Provider Edge Cases', () => {
-    it('should handle missing credentials gracefully', () => {
+    it('should handle missing credentials gracefully (allow anonymous SMTP)', () => {
       mockedConfig.email.smtp.auth.user = undefined as any;
       mockedConfig.email.smtp.auth.pass = undefined as any;
 
       const emailService = new EmailService();
 
-      expect(emailService.isEnabled()).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('⚠️ SMTP credentials not configured. Email sending will be disabled.');
+      // Should still be enabled for anonymous SMTP
+      expect(emailService.isEnabled()).toBe(true);
+      expect(logger.warn).toHaveBeenCalledWith(
+        '⚠️ SMTP credentials not configured. Using anonymous SMTP (suitable for Mailpit/testing).'
+      );
     });
 
     it('should handle unknown email provider types', () => {
@@ -339,10 +346,14 @@ describe('EmailService', () => {
       expect(emailService.getProviderInfo().provider).toBe('unknown-provider');
     });
 
-    it('should handle provider not configured during email sending', async () => {
-      // Create a service with missing credentials
+    it('should allow sending email with anonymous SMTP (no credentials)', async () => {
+      // Create a service with missing credentials (anonymous SMTP for Mailpit)
       mockedConfig.email.smtp.auth.user = '';
       const emailService = new EmailService();
+
+      // Mock successful email sending
+      const mockInfo = { messageId: 'test-message-id' };
+      mockTransporter.sendMail.mockResolvedValue(mockInfo);
 
       const result = await emailService.sendNotificationEmail(
         'user@example.com',
@@ -351,8 +362,9 @@ describe('EmailService', () => {
         'ORDER_CREATED'
       );
 
-      expect(result).toBe(false);
-      expect(mockTransporter.sendMail).not.toHaveBeenCalled();
+      // Should successfully send with anonymous SMTP
+      expect(result).toBe(true);
+      expect(mockTransporter.sendMail).toHaveBeenCalled();
     });
   });
 

@@ -7,9 +7,6 @@ import templateRoutes from './routes/template.routes.js';
 import * as operationalController from './controllers/operational.controller.js';
 import config from './config/index.js';
 import {
-  rateLimiter,
-  apiRateLimiter,
-  speedLimiter,
   corsOptions,
   helmetConfig,
   compressionMiddleware,
@@ -44,26 +41,6 @@ app.use(sanitizeInput);
 if (config.server.env !== 'test') {
   app.use(requestLoggingMiddleware);
 }
-
-// Rate limiting - apply globally (except for health and home endpoints)
-app.use((req, res, next) => {
-  // Skip rate limiting for home endpoints and health checks
-  if (req.path.startsWith('/api/home') || req.path.startsWith('/health')) {
-    return next();
-  }
-  rateLimiter(req, res, next);
-});
-
-app.use((req, res, next) => {
-  // Skip speed limiting for home endpoints and health checks
-  if (req.path.startsWith('/api/home') || req.path.startsWith('/health')) {
-    return next();
-  }
-  speedLimiter(req, res, next);
-});
-
-// API-specific rate limiting
-app.use('/api', apiRateLimiter);
 
 // Routes
 app.use('/api/home', homeRoutes);

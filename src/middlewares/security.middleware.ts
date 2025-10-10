@@ -1,86 +1,25 @@
-import rateLimit from 'express-rate-limit';
-import slowDown from 'express-slow-down';
 import helmet from 'helmet';
 import compression from 'compression';
 import { Request, Response, NextFunction } from 'express';
 import config from '../config/index.js';
 import logger from '../observability/logging/index.js';
 
-// Rate limiting configuration
-export const rateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.',
-    retryAfter: '15 minutes',
-  },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  handler: (req: Request, res: Response) => {
-    logger.warn(`Rate limit exceeded for IP: ${req.ip}`, {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      path: req.path,
-    });
-    res.status(429).json({
-      error: 'Too many requests from this IP, please try again later.',
-      retryAfter: '15 minutes',
-    });
-  },
-});
-
-// Stricter rate limiting for API endpoints
-export const apiRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // Limit each IP to 50 API requests per windowMs
-  message: {
-    error: 'Too many API requests from this IP, please try again later.',
-    retryAfter: '15 minutes',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req: Request, res: Response) => {
-    logger.warn(`API rate limit exceeded for IP: ${req.ip}`, {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      path: req.path,
-    });
-    res.status(429).json({
-      error: 'Too many API requests from this IP, please try again later.',
-      retryAfter: '15 minutes',
-    });
-  },
-});
-
-// Speed limiter (progressive delays)
-export const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  delayAfter: 10, // Allow 10 requests per windowMs without delay
-  delayMs: 500, // Add 500ms delay per request after delayAfter
-  maxDelayMs: 10000, // Maximum delay of 10 seconds
-});
-
 // CORS configuration
 export const corsOptions = {
-  origin: function (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-
-    // In production, you should specify allowed origins
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     const allowedOrigins =
       config.server.env === 'production'
         ? process.env.ALLOWED_ORIGINS?.split(',') || []
         : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'];
-
-    if (allowedOrigins.includes(origin) || config.server.env === 'development') {
+    if (allowedOrigins.includes(origin!) || config.server.env === 'development') {
       callback(null, true);
     } else {
-      logger.warn(`CORS: Origin not allowed: ${origin}`);
+      logger.warn(\`CORS: Origin not allowed: \${origin}\`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+  optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
@@ -93,16 +32,10 @@ export const helmetConfig = helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
     },
   },
-  crossOriginEmbedderPolicy: false, // Disable for API-only service
   hsts: {
-    maxAge: 31536000, // 1 year
+    maxAge: 31536000,
     includeSubDomains: true,
     preload: true,
   },
@@ -116,79 +49,58 @@ export const compressionMiddleware = compression({
     }
     return compression.filter(req, res);
   },
-  threshold: 1024, // Only compress if response is larger than 1KB
+  level: 6,
 });
 
 // Request logging middleware
 export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
-
   res.on('finish', () => {
     const duration = Date.now() - start;
-    const logData = {
+    logger.info('Request processed', {
       method: req.method,
-      path: req.path,
+      url: req.originalUrl,
       statusCode: res.statusCode,
-      duration: `${duration}ms`,
-      ip: req.ip,
+      duration: \`\${duration}ms\`,
       userAgent: req.get('User-Agent'),
-      contentLength: res.get('Content-Length') || '0',
-    };
-
-    if (res.statusCode >= 400) {
-      logger.warn('Request completed with error:', logData);
-    } else {
-      logger.info('Request completed:', logData);
-    }
+      ip: req.ip,
+    });
   });
-
   next();
 };
 
-// Error handling for security middleware
+// Security error handler
 export const securityErrorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   if (err.message === 'Not allowed by CORS') {
-    logger.warn(`CORS error for origin: ${req.get('Origin')}`, {
+    logger.warn('CORS error', {
+      origin: req.get('origin'),
       ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      path: req.path,
     });
     return res.status(403).json({
-      error: 'CORS: Origin not allowed',
+      error: 'CORS policy violation',
+      message: 'Origin not allowed',
     });
   }
-
-  // Handle other security-related errors
-  if (err.name === 'PayloadTooLargeError') {
-    logger.warn('Payload too large:', {
-      ip: req.ip,
-      contentLength: req.get('Content-Length'),
-      path: req.path,
-    });
-    return res.status(413).json({
-      error: 'Payload too large',
-    });
-  }
-
   next(err);
 };
 
 // Input sanitization middleware
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
-  // Basic sanitization - remove null bytes and trim strings
-  const sanitizeObject = (obj: unknown): unknown => {
+  const sanitizeString = (str: string): string => {
+    return str
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '');
+  };
+
+  const sanitizeObject = (obj: any): any => {
     if (typeof obj === 'string') {
-      return obj.replace(/\0/g, '').trim();
+      return sanitizeString(obj);
     }
-    if (Array.isArray(obj)) {
-      return obj.map(sanitizeObject);
-    }
-    if (obj && typeof obj === 'object') {
-      const sanitized: Record<string, unknown> = {};
+    if (typeof obj === 'object' && obj !== null) {
+      const sanitized: any = Array.isArray(obj) ? [] : {};
       for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          sanitized[key] = sanitizeObject((obj as Record<string, unknown>)[key]);
-        }
+        sanitized[key] = sanitizeObject(obj[key]);
       }
       return sanitized;
     }
@@ -209,9 +121,6 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 };
 
 export default {
-  rateLimiter,
-  apiRateLimiter,
-  speedLimiter,
   corsOptions,
   helmetConfig,
   compressionMiddleware,
