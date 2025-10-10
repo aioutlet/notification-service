@@ -18,6 +18,7 @@ interface Config {
   };
   rabbitmq: {
     url: string;
+    exchange: string;
     exchanges: {
       order: string;
       user: string;
@@ -60,12 +61,13 @@ const config: Config = {
   },
   rabbitmq: {
     url: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
+    exchange: process.env.RABBITMQ_EXCHANGE || 'aioutlet.events',
     exchanges: {
       order: process.env.RABBITMQ_EXCHANGE_ORDER || 'order.events',
       user: process.env.RABBITMQ_EXCHANGE_USER || 'user.events',
     },
     queues: {
-      notifications: process.env.RABBITMQ_QUEUE_NOTIFICATIONS || 'notifications',
+      notifications: process.env.RABBITMQ_QUEUE_NOTIFICATIONS || 'notification-service.queue',
     },
   },
   email: {

@@ -71,20 +71,13 @@ class MessageConsumer {
       // Set prefetch to limit concurrent message processing
       await this.channel.prefetch(10);
 
-      // Setup exchanges
-      await this.channel.assertExchange(config.rabbitmq.exchanges.order, 'topic', { durable: true });
-      await this.channel.assertExchange(config.rabbitmq.exchanges.user, 'topic', { durable: true });
+      // Setup main exchange (aioutlet.events)
+      await this.channel.assertExchange(config.rabbitmq.exchange, 'topic', { durable: true });
 
-      // Setup notification queue with TTL and DLX
-      // NOTE: If this fails with PRECONDITION_FAILED, delete the existing queue first:
-      // docker exec notification-rabbitmq rabbitmqctl delete_queue notifications
-      await this.channel.assertQueue(config.rabbitmq.queues.notifications, {
-        durable: true,
-        arguments: {
-          'x-dead-letter-exchange': '',
-          'x-dead-letter-routing-key': this.DLQ,
-        },
-      });
+      // Setup notification queue - use the queue created by setup script
+      // The queue 'notification-service.queue' is already created with proper bindings and TTL
+      // Use checkQueue instead of assertQueue to verify it exists without modifying properties
+      await this.channel.checkQueue(config.rabbitmq.queues.notifications);
 
       // Setup retry queue with TTL
       await this.channel.assertQueue(this.RETRY_QUEUE, {
@@ -104,16 +97,15 @@ class MessageConsumer {
         },
       });
 
-      // Bind queue to exchanges for different event patterns
-      await this.channel.bindQueue(config.rabbitmq.queues.notifications, config.rabbitmq.exchanges.order, 'order.*');
-      await this.channel.bindQueue(config.rabbitmq.queues.notifications, config.rabbitmq.exchanges.user, 'user.*');
+      // The bindings are already created by setup-rabbitmq-queues.sh script
+      // notification-service.queue is bound to auth.*, order.*, payment.* patterns
 
       // Test database connection
       await this.dbService.testConnection();
 
       logger.info('✅ RabbitMQ connection established');
-      logger.info(`📥 Listening to queues: ${config.rabbitmq.queues.notifications}`);
-      logger.info(`🔄 Bound to exchanges: ${config.rabbitmq.exchanges.order}, ${config.rabbitmq.exchanges.user}`);
+      logger.info(`📥 Listening to queue: ${config.rabbitmq.queues.notifications}`);
+      logger.info(`� Connected to exchange: ${config.rabbitmq.exchange}`);
       logger.info(`🔁 Retry queue: ${this.RETRY_QUEUE}`);
       logger.info(`💀 Dead letter queue: ${this.DLQ}`);
     } catch (error) {
@@ -202,8 +194,22 @@ class MessageConsumer {
     const correlationId = message.properties.correlationId || 'unknown';
 
     try {
-      const eventData = JSON.parse(message.content.toString());
+      let eventData = JSON.parse(message.content.toString());
       const metadata: MessageMetadata = this.extractMessageMetadata(message);
+
+      // Handle message broker format: { topic, data } -> { eventType, ...data }
+      if (eventData.topic && eventData.data) {
+        eventData = {
+          eventType: eventData.topic,
+          ...eventData.data,
+        };
+      }
+
+      // Ensure userId is set for database insertion (required field)
+      // For auth events without userId, use email or username as identifier
+      if (!eventData.userId && (eventData.email || eventData.username)) {
+        eventData.userId = eventData.email || eventData.username;
+      }
 
       logger.info('📨 Received event:', {
         messageId,
@@ -348,10 +354,13 @@ class MessageConsumer {
 
   private async processNotificationEvent(eventData: any): Promise<void> {
     // Validate event structure
-    if (!eventData.eventType || !eventData.userId) {
-      logger.warn('⚠️ Invalid event structure, missing eventType or userId');
+    if (!eventData.eventType) {
+      logger.warn('⚠️ Invalid event structure, missing eventType');
       return;
     }
+
+    // For auth events, userId might not be present - use email or username as identifier
+    const identifier = eventData.userId || eventData.email || eventData.username || 'unknown';
 
     // Check if it's a supported event type
     if (!Object.values(EventTypes).includes(eventData.eventType)) {
@@ -361,7 +370,8 @@ class MessageConsumer {
 
     logger.info('🔔 Processing notification for event:', {
       eventType: eventData.eventType,
-      userId: eventData.userId,
+      identifier,
+      email: eventData.email,
       timestamp: new Date().toISOString(),
     });
 
@@ -391,9 +401,11 @@ class MessageConsumer {
 
       // Send actual email notification
       let emailSent = false;
-      if (eventData.userEmail && this.emailService.isEnabled()) {
+      const recipientEmail = eventData.userEmail || eventData.email;
+
+      if (recipientEmail && this.emailService.isEnabled()) {
         emailSent = await this.emailService.sendNotificationEmail(
-          eventData.userEmail,
+          recipientEmail,
           notification.subject || 'Notification',
           notification.message,
           eventData.eventType,
@@ -404,7 +416,7 @@ class MessageConsumer {
           await this.notificationService.updateNotificationStatus(notificationId, 'sent');
           logger.info('✅ Email notification sent successfully:', {
             notificationId,
-            email: eventData.userEmail,
+            email: recipientEmail,
           });
         } else {
           await this.notificationService.updateNotificationStatus(notificationId, 'failed', 'Email sending failed');
@@ -418,7 +430,7 @@ class MessageConsumer {
         );
         logger.warn('⚠️ Email notification skipped:', {
           notificationId,
-          hasEmail: !!eventData.userEmail,
+          hasEmail: !!recipientEmail,
           emailEnabled: this.emailService.isEnabled(),
         });
       }

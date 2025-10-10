@@ -341,7 +341,27 @@ class NotificationService {
     };
 
     // Add event-specific variables based on event type
-    if (eventData.eventType.startsWith('order.')) {
+    if (eventData.eventType.startsWith('auth.')) {
+      const authData = eventData.data as any;
+      if (authData) {
+        variables.username = authData.username || authData.email;
+        variables.email = authData.email;
+        variables.ipAddress = authData.ipAddress;
+        variables.userAgent = authData.userAgent;
+
+        // Build URLs for tokens
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        if (authData.verificationToken) {
+          variables.verificationUrl = `${baseUrl}/verify-email?token=${authData.verificationToken}`;
+        }
+        if (authData.resetToken) {
+          variables.resetUrl = `${baseUrl}/reset-password?token=${authData.resetToken}`;
+        }
+        if (authData.reactivationToken) {
+          variables.reactivationUrl = `${baseUrl}/reactivate?token=${authData.reactivationToken}`;
+        }
+      }
+    } else if (eventData.eventType.startsWith('order.')) {
       const orderData = eventData.data as any;
       if (orderData) {
         variables.orderId = orderData.orderId;

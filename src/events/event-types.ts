@@ -10,6 +10,14 @@ export interface BaseEvent {
 
 // Event types enum
 export enum EventTypes {
+  // Auth events
+  AUTH_USER_REGISTERED = 'auth.user.registered',
+  AUTH_LOGIN = 'auth.login',
+  AUTH_EMAIL_VERIFICATION_REQUESTED = 'auth.email.verification.requested',
+  AUTH_PASSWORD_RESET_REQUESTED = 'auth.password.reset.requested',
+  AUTH_PASSWORD_RESET_COMPLETED = 'auth.password.reset.completed',
+  AUTH_ACCOUNT_REACTIVATION_REQUESTED = 'auth.account.reactivation.requested',
+
   // Order events
   ORDER_PLACED = 'order.placed',
   ORDER_CANCELLED = 'order.cancelled',
@@ -24,6 +32,25 @@ export enum EventTypes {
 }
 
 // Specific event interfaces
+export interface AuthEvent extends BaseEvent {
+  eventType:
+    | EventTypes.AUTH_USER_REGISTERED
+    | EventTypes.AUTH_LOGIN
+    | EventTypes.AUTH_EMAIL_VERIFICATION_REQUESTED
+    | EventTypes.AUTH_PASSWORD_RESET_REQUESTED
+    | EventTypes.AUTH_PASSWORD_RESET_COMPLETED
+    | EventTypes.AUTH_ACCOUNT_REACTIVATION_REQUESTED;
+  data: {
+    username?: string;
+    email?: string;
+    verificationToken?: string;
+    resetToken?: string;
+    reactivationToken?: string;
+    ipAddress?: string;
+    userAgent?: string;
+  };
+}
+
 export interface OrderEvent extends BaseEvent {
   eventType: EventTypes.ORDER_PLACED | EventTypes.ORDER_CANCELLED | EventTypes.ORDER_DELIVERED;
   data: {
@@ -57,4 +84,4 @@ export interface ProfileEvent extends BaseEvent {
 }
 
 // Union type for all events
-export type NotificationEvent = OrderEvent | PaymentEvent | ProfileEvent;
+export type NotificationEvent = AuthEvent | OrderEvent | PaymentEvent | ProfileEvent;

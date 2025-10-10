@@ -28,25 +28,32 @@ class SMTPEmailProvider implements EmailProvider {
 
   private initializeTransporter(): void {
     try {
-      if (!config.email.smtp.auth.user || !config.email.smtp.auth.pass) {
-        logger.warn('⚠️ SMTP credentials not configured. Email sending will be disabled.');
-        this.configured = false;
-        return;
+      // For Mailpit and other local SMTP servers, credentials might be optional
+      const hasCredentials = config.email.smtp.auth.user && config.email.smtp.auth.pass;
+
+      if (!hasCredentials) {
+        logger.warn('⚠️ SMTP credentials not configured. Using anonymous SMTP (suitable for Mailpit/testing).');
       }
 
-      this.transporter = nodemailer.createTransport({
+      const transportConfig: any = {
         host: config.email.smtp.host,
         port: config.email.smtp.port,
         secure: config.email.smtp.secure,
-        auth: {
-          user: config.email.smtp.auth.user,
-          pass: config.email.smtp.auth.pass,
-        },
         // Add some additional options for better compatibility
         tls: {
           rejectUnauthorized: false, // Accept self-signed certificates (for development)
         },
-      });
+      };
+
+      // Only add auth if credentials are provided
+      if (hasCredentials) {
+        transportConfig.auth = {
+          user: config.email.smtp.auth.user,
+          pass: config.email.smtp.auth.pass,
+        };
+      }
+
+      this.transporter = nodemailer.createTransport(transportConfig);
 
       this.configured = true;
       logger.info('✅ SMTP email provider initialized successfully');

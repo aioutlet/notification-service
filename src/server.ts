@@ -43,10 +43,10 @@ const startServer = async (): Promise<void> => {
     server.headersTimeout = 66000; // 66 seconds
 
     // Start RabbitMQ consumer
-    logger.info(`🔌 Skipping RabbitMQ connection for observability testing...`);
-    // await messageConsumer.connect();
-    // await messageConsumer.startConsuming();
-    logger.info(`🎯 Message consumer setup skipped for testing`);
+    logger.info(`🔌 Connecting to RabbitMQ message broker...`);
+    await messageConsumer.connect();
+    await messageConsumer.startConsuming();
+    logger.info(`🎯 Message consumer started - listening for events`);
 
     // Enhanced graceful shutdown
     const gracefulShutdown = async (signal: string) => {
