@@ -11,10 +11,10 @@ export const corsOptions = {
       config.server.env === 'production'
         ? process.env.ALLOWED_ORIGINS?.split(',') || []
         : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'];
-    if (allowedOrigins.includes(origin!) || config.server.env === 'development') {
+    if (!origin || allowedOrigins.includes(origin) || config.server.env === 'development') {
       callback(null, true);
     } else {
-      logger.warn(\`CORS: Origin not allowed: \${origin}\`);
+      logger.warn(`CORS: Origin not allowed: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -61,7 +61,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       method: req.method,
       url: req.originalUrl,
       statusCode: res.statusCode,
-      duration: \`\${duration}ms\`,
+      duration: `${duration}ms`,
       userAgent: req.get('User-Agent'),
       ip: req.ip,
     });
