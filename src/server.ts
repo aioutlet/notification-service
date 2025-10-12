@@ -8,7 +8,8 @@ import './observability/tracing/setup.js';
 import app from './app.js';
 import config from './config/index.js';
 import Logger from './observability/logging/logger.js';
-import MessageConsumer from './services/message-consumer.js';
+import { MessageBrokerFactory } from './messaging/MessageBrokerFactory.js';
+import { IMessageBroker } from './messaging/IMessageBroker.js';
 import DatabaseService from './services/database.service.js';
 import { Server } from 'http';
 import { handleUncaughtException, handleUnhandledRejection } from './middlewares/error.middleware.js';
@@ -20,7 +21,7 @@ const logger = new Logger();
 process.on('uncaughtException', handleUncaughtException);
 process.on('unhandledRejection', handleUnhandledRejection);
 
-const messageConsumer = new MessageConsumer();
+const messageBroker: IMessageBroker = MessageBrokerFactory.create();
 let server: Server;
 let isShuttingDown = false;
 
@@ -46,10 +47,10 @@ const startServer = async (): Promise<void> => {
     server.keepAliveTimeout = 65000; // 65 seconds
     server.headersTimeout = 66000; // 66 seconds
 
-    // Start RabbitMQ consumer
-    logger.info(`🔌 Connecting to RabbitMQ message broker...`);
-    await messageConsumer.connect();
-    await messageConsumer.startConsuming();
+    // Start message broker consumer
+    logger.info(`🔌 Connecting to message broker...`);
+    await messageBroker.connect();
+    await messageBroker.startConsuming();
     logger.info(`🎯 Message consumer started - listening for events`);
 
     // Enhanced graceful shutdown
@@ -73,9 +74,9 @@ const startServer = async (): Promise<void> => {
         server.close(async () => {
           logger.info('🔌 HTTP server closed');
 
-          // Stop RabbitMQ consumer and close connections
-          logger.info('🔌 Closing RabbitMQ connections...');
-          await messageConsumer.disconnect();
+          // Stop message broker consumer and close connections
+          logger.info('🔌 Closing message broker connections...');
+          await messageBroker.close();
 
           // Close database connections
           logger.info('🔌 Closing database connections...');
