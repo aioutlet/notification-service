@@ -341,7 +341,22 @@ class NotificationService {
     };
 
     // Add event-specific variables based on event type
-    if (eventData.eventType.startsWith('auth.')) {
+    if (eventData.eventType.startsWith('user.')) {
+      const userData = eventData.data as any;
+      if (userData) {
+        variables.userId = userData.userId || eventData.userId;
+        variables.email = userData.email || eventData.userEmail;
+        variables.name = userData.name || userData.firstName || '';
+        variables.isEmailVerified = userData.isEmailVerified;
+        variables.role = userData.role || 'user';
+
+        // Build URLs for user actions
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        variables.dashboardUrl = `${baseUrl}/dashboard`;
+        variables.profileUrl = `${baseUrl}/profile`;
+        variables.verifyEmailUrl = `${baseUrl}/verify-email`;
+      }
+    } else if (eventData.eventType.startsWith('auth.')) {
       const authData = eventData.data as any;
       if (authData) {
         variables.username = authData.username || authData.email;
@@ -391,7 +406,21 @@ class NotificationService {
   private generateBasicMessage(eventData: NotificationEvent): string {
     const data = eventData.data as any;
 
-    if (eventData.eventType.startsWith('order.')) {
+    if (eventData.eventType.startsWith('user.')) {
+      const name = data?.name || eventData.userId;
+      if (eventData.eventType.includes('created')) {
+        return `Welcome ${name}! Your account has been created successfully.`;
+      } else if (eventData.eventType.includes('updated')) {
+        return `Your profile has been updated, ${name}.`;
+      } else if (eventData.eventType.includes('deleted')) {
+        return `Your account has been deleted.`;
+      } else if (eventData.eventType.includes('email.verified')) {
+        return `Your email has been verified successfully, ${name}!`;
+      } else if (eventData.eventType.includes('password.changed')) {
+        return `Your password has been changed successfully.`;
+      }
+      return `User account update.`;
+    } else if (eventData.eventType.startsWith('order.')) {
       const orderId = data?.orderId || 'N/A';
       if (eventData.eventType.includes('placed')) {
         return `Your order ${orderId} has been placed successfully.`;

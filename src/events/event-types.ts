@@ -10,6 +10,13 @@ export interface BaseEvent {
 
 // Event types enum
 export enum EventTypes {
+  // User events
+  USER_CREATED = 'user.user.created',
+  USER_UPDATED = 'user.user.updated',
+  USER_DELETED = 'user.user.deleted',
+  USER_EMAIL_VERIFIED = 'user.email.verified',
+  USER_PASSWORD_CHANGED = 'user.password.changed',
+
   // Auth events
   AUTH_USER_REGISTERED = 'auth.user.registered',
   AUTH_LOGIN = 'auth.login',
@@ -32,6 +39,24 @@ export enum EventTypes {
 }
 
 // Specific event interfaces
+export interface UserEvent extends BaseEvent {
+  eventType:
+    | EventTypes.USER_CREATED
+    | EventTypes.USER_UPDATED
+    | EventTypes.USER_DELETED
+    | EventTypes.USER_EMAIL_VERIFIED
+    | EventTypes.USER_PASSWORD_CHANGED;
+  data: {
+    userId: string;
+    email: string;
+    name?: string;
+    isEmailVerified?: boolean;
+    role?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+}
+
 export interface AuthEvent extends BaseEvent {
   eventType:
     | EventTypes.AUTH_USER_REGISTERED
@@ -84,4 +109,4 @@ export interface ProfileEvent extends BaseEvent {
 }
 
 // Union type for all events
-export type NotificationEvent = AuthEvent | OrderEvent | PaymentEvent | ProfileEvent;
+export type NotificationEvent = UserEvent | AuthEvent | OrderEvent | PaymentEvent | ProfileEvent;
