@@ -186,7 +186,8 @@ export function createConsoleFormat(config: LoggerConfig): winston.Logform.Forma
       const unifiedEntry = createUnifiedLogEntry(config, info);
       const message = formatConsoleMessage(unifiedEntry);
 
-      return config.environment === 'development' ? colorizeLevel(message, unifiedEntry.level.toLowerCase()) : message;
+      // Always colorize console output for better readability
+      return colorizeLevel(message, unifiedEntry.level.toLowerCase());
     })
   );
 }

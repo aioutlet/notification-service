@@ -1,5 +1,9 @@
-// Initialize tracing FIRST - this must be the very first import
-import './tracing-init.js';
+// Industry-standard initialization pattern:
+// 1. Initialize observability modules (logger, tracing) - uses console.log for bootstrap
+// 2. Start application
+
+import './observability/logging/logger.js';
+import './observability/tracing/setup.js';
 
 import app from './app.js';
 import config from './config/index.js';

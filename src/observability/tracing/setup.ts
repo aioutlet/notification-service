@@ -15,7 +15,6 @@ const enableTracing = process.env.ENABLE_TRACING !== 'false' && environment !== 
  */
 export function initializeTracing(): boolean {
   if (!enableTracing) {
-    console.log('Tracing disabled for notification-service environment:', environment);
     return false;
   }
 
@@ -41,10 +40,10 @@ export function initializeTracing(): boolean {
     });
 
     sdk.start();
-    console.log('✅ OpenTelemetry tracing initialized successfully for notification-service');
+    console.log('[TRACING] ✅ OpenTelemetry tracing initialized successfully');
     return true;
   } catch (error) {
-    console.warn('⚠️ Failed to initialize OpenTelemetry for notification-service:', (error as Error).message);
+    console.warn('[TRACING] ⚠️  Failed to initialize OpenTelemetry:', (error as Error).message);
     return false;
   }
 }
