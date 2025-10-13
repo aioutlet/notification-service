@@ -14,13 +14,13 @@ module.exports = function resolver(path, options) {
     // If the path ends with .js, try to find the .ts file
     if (path.endsWith('.js')) {
       const tsPath = path.replace(/\.js$/, '.ts');
-      
+
       // Try direct .ts file
       let absolutePath = resolve(options.basedir, tsPath);
       if (existsSync(absolutePath)) {
         return absolutePath;
       }
-      
+
       // For relative imports, also check if removing /index helps
       // (e.g., '../shared/config/index.ts' -> '../shared/config.ts')
       if (tsPath.endsWith('/index.ts')) {
@@ -31,7 +31,7 @@ module.exports = function resolver(path, options) {
         }
       }
     }
-    
+
     // If still not found, throw the original error
     throw e;
   }
