@@ -12,7 +12,7 @@ describe('Config', () => {
     jest.resetModules();
 
     // Clear the require cache to ensure fresh imports
-    const configPath = require.resolve('../../src/config/index');
+    const configPath = require.resolve('../../src/shared/config/index');
     delete require.cache[configPath];
   });
 
@@ -33,7 +33,7 @@ describe('Config', () => {
       };
 
       // Import config after setting clean environment
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.server).toEqual({
         port: 3003,
@@ -95,7 +95,7 @@ describe('Config', () => {
       };
       process.env.NODE_ENV = 'production'; // Override after cleanup
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.server).toEqual({
         port: 4000,
@@ -124,7 +124,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.database).toEqual({
         host: 'db.example.com',
@@ -154,7 +154,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.rabbitmq).toEqual({
         url: 'amqp://user:pass@rabbitmq.example.com:5672',
@@ -193,7 +193,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.email).toEqual({
         provider: 'sendgrid',
@@ -234,7 +234,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(typeof config.server.port).toBe('number');
       expect(config.server.port).toBe(8080);
@@ -256,7 +256,7 @@ describe('Config', () => {
         SMTP_PORT: 'invalid-port',
       };
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       // parseInt returns NaN for invalid strings
       expect(isNaN(config.server.port)).toBe(true);
@@ -279,12 +279,12 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      let config = require('../../src/config/index').default;
+      let config = require('../../src/shared/config/index').default;
       expect(config.email.smtp.secure).toBe(true);
 
       // Reset modules for fresh import
       jest.resetModules();
-      const configPath = require.resolve('../../src/config/index');
+      const configPath = require.resolve('../../src/shared/config/index');
       delete require.cache[configPath];
 
       // Test false value
@@ -300,7 +300,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      config = require('../../src/config/index').default;
+      config = require('../../src/shared/config/index').default;
       expect(config.email.smtp.secure).toBe(false);
 
       // Reset modules for fresh import
@@ -320,12 +320,12 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      config = require('../../src/config/index').default;
+      config = require('../../src/shared/config/index').default;
       expect(config.email.smtp.secure).toBe(false);
     });
 
     it('should handle email enabled flag correctly', () => {
-      const configPath = require.resolve('../../src/config/index');
+      const configPath = require.resolve('../../src/shared/config/index');
 
       // Test explicitly disabled
       process.env = {
@@ -340,7 +340,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      let config = require('../../src/config/index').default;
+      let config = require('../../src/shared/config/index').default;
       expect(config.email.enabled).toBe(false);
 
       jest.resetModules();
@@ -359,7 +359,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      config = require('../../src/config/index').default;
+      config = require('../../src/shared/config/index').default;
       expect(config.email.enabled).toBe(true);
 
       jest.resetModules();
@@ -377,7 +377,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      config = require('../../src/config/index').default;
+      config = require('../../src/shared/config/index').default;
       expect(config.email.enabled).toBe(true);
 
       jest.resetModules();
@@ -396,7 +396,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      config = require('../../src/config/index').default;
+      config = require('../../src/shared/config/index').default;
       expect(config.email.enabled).toBe(true);
     });
   });
@@ -417,7 +417,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.server.env).toBe('test');
       expect(config.database.name).toBe('notification_service_test');
@@ -441,7 +441,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.server.env).toBe('production');
       expect(config.server.port).toBe(80);
@@ -464,7 +464,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.server.env).toBe('development');
       expect(config.server.host).toBe('localhost');
@@ -484,7 +484,7 @@ describe('Config', () => {
         // When undefined, the config will use the || fallback values
       };
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       // When environment variables are undefined, config uses default values
       expect(config.database.password).toBe('notification_pass'); // default value
@@ -507,7 +507,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       // Ensure the config is properly structured (no flat exposure)
       expect(config.database.password).toBe('super-secret-password');
@@ -534,7 +534,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config).toHaveProperty('server');
       expect(config).toHaveProperty('database');
@@ -556,7 +556,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.server).toHaveProperty('port');
       expect(config.server).toHaveProperty('host');
@@ -577,7 +577,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.database).toHaveProperty('host');
       expect(config.database).toHaveProperty('port');
@@ -600,7 +600,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.rabbitmq).toHaveProperty('url');
       expect(config.rabbitmq).toHaveProperty('exchanges');
@@ -624,7 +624,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.email).toHaveProperty('provider');
       expect(config.email).toHaveProperty('smtp');
@@ -656,7 +656,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       // Should fall back to defaults
       expect(config.server.port).toBe(3003);
@@ -680,7 +680,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.server.port).toBe(0);
       expect(config.database.port).toBe(-1);
@@ -703,7 +703,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.database.name).toBe(longString);
       expect(config.email.from.name).toBe(longString);
@@ -725,7 +725,7 @@ describe('Config', () => {
         config: jest.fn(),
       }));
 
-      const config = require('../../src/config/index').default;
+      const config = require('../../src/shared/config/index').default;
 
       expect(config.database.password).toBe('pass@word!#$%^&*()');
       expect(config.rabbitmq.url).toBe('amqp://user:p@ss@w0rd@localhost:5672');

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import TemplateService, { NotificationTemplate } from '../services/template.service.js';
-import logger from '../observability/logging/index.js';
+import TemplateService, { NotificationTemplate } from '../shared/services/template.service.js';
+import logger from '../shared/observability/logging/index.js';
 
 const templateService = new TemplateService();
 

@@ -14,7 +14,7 @@ import {
   renderTemplateTestSchema,
   templateIdSchema,
   templateParamsSchema,
-} from '../validators/schemas.js';
+} from '../shared/validators/schemas.js';
 import AuthMiddleware from '../middlewares/auth.middleware.js';
 
 const router = Router();

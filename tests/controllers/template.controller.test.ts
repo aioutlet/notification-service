@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 
 // Mock dependencies
-jest.mock('../../src/observability/logging/index.js');
+jest.mock('../../src/shared/observability/logging/index.js');
 
 // Mock the service before importing the controller
 const mockTemplateService = {
@@ -13,7 +13,7 @@ const mockTemplateService = {
   renderTemplate: jest.fn(),
 };
 
-jest.mock('../../src/services/template.service', () => {
+jest.mock('../../src/shared/services/template.service', () => {
   return jest.fn().mockImplementation(() => mockTemplateService);
 });
 
@@ -26,9 +26,9 @@ import {
   deleteTemplate,
   testTemplateRendering,
   renderTemplateTest,
-} from '../../src/controllers/template.controller';
-import logger from '../../src/observability/logging/index.js';
-import { NotificationTemplate } from '../../src/services/template.service';
+} from '../../src/api/controllers/template.controller';
+import logger from '../../src/shared/observability/logging/index.js';
+import { NotificationTemplate } from '../../src/shared/services/template.service';
 
 describe('Template Controller', () => {
   // Create mock response object

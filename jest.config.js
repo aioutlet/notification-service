@@ -9,6 +9,7 @@ export default {
       'ts-jest',
       {
         useESM: true,
+        isolatedModules: true, // Skip type checking for faster tests
       },
     ],
   },
@@ -26,6 +27,8 @@ export default {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  modulePaths: ['<rootDir>/src'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   // Environment variables for testing
   setupFiles: ['<rootDir>/tests/env.ts'],
   // Make Jest globals available

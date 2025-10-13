@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import config from '../config/index.js';
-import logger from '../observability/logging/index.js';
+import config from '../shared/config/index.js';
+import logger from '../shared/observability/logging/index.js';
 
 export function getWelcomeMessage(req: Request, res: Response): void {
   logger.info('Welcome endpoint accessed');

@@ -1,14 +1,14 @@
 import mysql from 'mysql2/promise';
-import DatabaseService from '../../src/services/database.service';
-import config from '../../src/config/index';
+import DatabaseService from '../../src/shared/services/database.service';
+import config from '../../src/shared/config/index';
 
 // Mock dependencies
 jest.mock('mysql2/promise');
-jest.mock('../../src/observability/logging/index.js');
-jest.mock('../../src/config/index');
+jest.mock('../../src/shared/observability/logging/index.js');
+jest.mock('../../src/shared/config/index');
 
 // Import after mocking
-import logger from '../../src/observability/logging/index.js';
+import logger from '../../src/shared/observability/logging/index.js';
 
 // Type the mocked modules
 const mockedMySQL = mysql as jest.Mocked<typeof mysql>;

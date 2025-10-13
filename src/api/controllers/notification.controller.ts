@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import logger from '../observability/logging/index.js';
-import NotificationService from '../services/notification.service.js';
-import EmailService from '../services/email.service.js';
+import logger from '../shared/observability/logging/index.js';
+import NotificationService from '../shared/services/notification.service.js';
+import EmailService from '../shared/services/email.service.js';
 import { createSuccessResponse } from '../middlewares/validation.middleware.js';
-import { CreateNotificationInput } from '../validators/schemas.js';
+import { CreateNotificationInput } from '../shared/validators/schemas.js';
 import { AuthRequest } from '../middlewares/auth.middleware.js';
-import ErrorResponse from '../utils/ErrorResponse.js';
+import ErrorResponse from '../shared/utils/ErrorResponse.js';
 
 const notificationService = new NotificationService();
 const emailService = new EmailService();

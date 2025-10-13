@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
-import Logger from '../observability/logging/logger.js';
+import Logger from '../shared/observability/logging/logger.js';
 import { RequestWithCorrelationId } from './correlationId.middleware.js';
 
 // Create logger instance

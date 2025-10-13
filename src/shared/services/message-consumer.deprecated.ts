@@ -211,9 +211,10 @@ class MessageConsumer {
         eventData.userId = eventData.email || eventData.username;
       }
 
-      logger.info('📨 Received event:', {
-        messageId,
+      logger.info('📨 Received event', null, {
+        operation: 'process_message',
         correlationId,
+        messageId,
         eventType: eventData.eventType,
         retryCount: metadata.retryCount || 0,
         queueType,
@@ -228,10 +229,12 @@ class MessageConsumer {
 
       // Acknowledge the message on success
       this.channel.ack(message);
-      logger.info('✅ Event processed successfully:', {
-        messageId,
+      logger.info('✅ Event processed successfully', null, {
+        operation: 'process_message',
         correlationId,
-        duration: `${duration}ms`,
+        messageId,
+        eventType: eventData.eventType,
+        duration,
       });
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -239,11 +242,12 @@ class MessageConsumer {
       // Record failure metrics
       // this.monitoring.recordMessageFailed();
 
-      logger.error('❌ Error processing message:', {
-        messageId,
+      logger.error('❌ Error processing message', null, {
+        operation: 'process_message',
         correlationId,
-        error: error instanceof Error ? error.message : error,
-        duration: `${duration}ms`,
+        messageId,
+        error: error instanceof Error ? error : new Error(String(error)),
+        duration,
       });
 
       await this.handleMessageFailure(message, error);
@@ -368,11 +372,12 @@ class MessageConsumer {
       return;
     }
 
-    logger.info('🔔 Processing notification for event:', {
+    logger.info('🔔 Processing notification for event', null, {
+      operation: 'process_notification',
+      correlationId: eventData.correlationId,
       eventType: eventData.eventType,
       identifier,
       email: eventData.email,
-      timestamp: new Date().toISOString(),
     });
 
     // Process the notification with template rendering and email delivery
@@ -386,9 +391,12 @@ class MessageConsumer {
       // Save notification to database first (with template rendering)
       notificationId = await this.notificationService.createNotification(eventData, 'email');
 
-      logger.info('📤 Processing notification:', {
+      logger.info('📤 Processing notification', null, {
+        operation: 'send_notification',
+        correlationId: eventData.correlationId,
+        businessEvent: 'NOTIFICATION_CREATED',
         notificationId,
-        to: eventData.userId,
+        userId: eventData.userId,
         eventType: eventData.eventType,
       });
 
@@ -414,13 +422,22 @@ class MessageConsumer {
 
         if (emailSent) {
           await this.notificationService.updateNotificationStatus(notificationId, 'sent');
-          logger.info('✅ Email notification sent successfully:', {
+          logger.info('✅ Email notification sent successfully', null, {
+            operation: 'send_email',
+            correlationId: eventData.correlationId,
+            businessEvent: 'EMAIL_SENT',
             notificationId,
             email: recipientEmail,
+            eventType: eventData.eventType,
           });
         } else {
           await this.notificationService.updateNotificationStatus(notificationId, 'failed', 'Email sending failed');
-          logger.error('❌ Failed to send email notification:', { notificationId });
+          logger.error('❌ Failed to send email notification', null, {
+            operation: 'send_email',
+            correlationId: eventData.correlationId,
+            notificationId,
+            error: new Error('Email sending failed'),
+          });
         }
       } else {
         await this.notificationService.updateNotificationStatus(

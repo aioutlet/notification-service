@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { createSuccessResponse } from '../../src/middlewares/validation.middleware';
-import ErrorResponse from '../../src/utils/ErrorResponse';
-import { AuthRequest } from '../../src/middlewares/auth.middleware';
+import { createSuccessResponse } from '../../src/api/middlewares/validation.middleware';
+import ErrorResponse from '../../src/shared/utils/ErrorResponse';
+import { AuthRequest } from '../../src/api/middlewares/auth.middleware';
 
 // Mock dependencies
-jest.mock('../../src/observability/logging/index.js');
-jest.mock('../../src/middlewares/validation.middleware');
+jest.mock('../../src/shared/observability/logging/index.js');
+jest.mock('../../src/api/middlewares/validation.middleware');
 
 // Mock the services before importing the controller
 const mockNotificationService = {
@@ -22,11 +22,11 @@ const mockEmailService = {
   getProviderInfo: jest.fn(),
 };
 
-jest.mock('../../src/services/notification.service', () => {
+jest.mock('../../src/shared/services/notification.service', () => {
   return jest.fn().mockImplementation(() => mockNotificationService);
 });
 
-jest.mock('../../src/services/email.service', () => {
+jest.mock('../../src/shared/services/email.service', () => {
   return jest.fn().mockImplementation(() => mockEmailService);
 });
 
@@ -38,8 +38,8 @@ import {
   getNotificationStats,
   getNotifications,
   testEmailService,
-} from '../../src/controllers/notification.controller';
-import logger from '../../src/observability/logging/index.js';
+} from '../../src/api/controllers/notification.controller';
+import logger from '../../src/shared/observability/logging/index.js';
 
 const mockCreateSuccessResponse = createSuccessResponse as jest.MockedFunction<typeof createSuccessResponse>;
 

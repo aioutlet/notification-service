@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import DatabaseService from '../services/database.service.js';
+import DatabaseService from '../shared/services/database.service.js';
 
 export function health(req: Request, res: Response) {
   res.json({

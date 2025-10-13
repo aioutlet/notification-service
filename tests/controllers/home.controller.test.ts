@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { getWelcomeMessage, getVersion, health } from '../../src/controllers/home.controller';
-import logger from '../../src/observability/logging/index.js';
+import { getWelcomeMessage, getVersion, health } from '../../src/api/controllers/home.controller';
+import logger from '../../src/shared/observability/logging/index.js';
 
 // Mock dependencies
-jest.mock('../../src/observability/logging/index.js');
-jest.mock('../../src/config/index', () => ({
+jest.mock('../../src/shared/observability/logging/index.js');
+jest.mock('../../src/shared/config/index', () => ({
   server: {
     env: 'test',
   },

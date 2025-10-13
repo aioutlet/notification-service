@@ -5,7 +5,7 @@ import homeRoutes from './routes/home.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import templateRoutes from './routes/template.routes.js';
 import * as operationalController from './controllers/operational.controller.js';
-import config from './config/index.js';
+import config from '../shared/config/index.js';
 import {
   corsOptions,
   helmetConfig,
@@ -18,6 +18,12 @@ import { correlationIdMiddleware } from './middlewares/correlationId.middleware.
 import { requestLoggingMiddleware, errorLoggingMiddleware } from './middlewares/request.middleware.js';
 
 const app = express();
+
+// ===========================================================================
+// NOTIFICATION API (ADMIN ONLY)
+// This API provides administrative endpoints for managing notifications
+// All endpoints require admin authentication
+// ===========================================================================
 
 // Correlation ID middleware - must be first to ensure all requests have correlation ID
 app.use(correlationIdMiddleware);

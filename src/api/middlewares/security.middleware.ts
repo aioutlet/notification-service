@@ -1,8 +1,8 @@
 import helmet from 'helmet';
 import compression from 'compression';
 import { Request, Response, NextFunction } from 'express';
-import config from '../config/index.js';
-import logger from '../observability/logging/index.js';
+import config from '../shared/config/index.js';
+import logger from '../shared/observability/logging/index.js';
 
 // CORS configuration
 export const corsOptions = {

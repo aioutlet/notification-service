@@ -1,14 +1,14 @@
 import nodemailer from 'nodemailer';
-import EmailService from '../../src/services/email.service';
-import config from '../../src/config/index';
+import EmailService from '../../src/shared/services/email.service';
+import config from '../../src/shared/config/index';
 
 // Mock dependencies
 jest.mock('nodemailer');
-jest.mock('../../src/observability/logging/index.js');
-jest.mock('../../src/config/index');
+jest.mock('../../src/shared/observability/logging/index.js');
+jest.mock('../../src/shared/config/index');
 
 // Import after mocking
-import logger from '../../src/observability/logging/index.js';
+import logger from '../../src/shared/observability/logging/index.js';
 
 // Type the mocked modules
 const mockedNodemailer = nodemailer as jest.Mocked<typeof nodemailer>;

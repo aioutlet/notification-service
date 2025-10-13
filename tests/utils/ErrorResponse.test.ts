@@ -1,4 +1,4 @@
-import ErrorResponse from '../../src/utils/ErrorResponse';
+import ErrorResponse from '../../src/shared/utils/ErrorResponse';
 
 describe('ErrorResponse', () => {
   describe('Constructor', () => {

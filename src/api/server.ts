@@ -1,16 +1,20 @@
-// Industry-standard initialization pattern:
-// 1. Initialize observability modules (logger, tracing) - uses console.log for bootstrap
-// 2. Start application
+/**
+ * Notification Service API Server (ADMIN ONLY)
+ *
+ * This is the HTTP API component for administrative access to notifications.
+ * All endpoints require admin authentication.
+ *
+ * For message processing, see: src/consumer/consumer.ts
+ */
 
-import './observability/logging/logger.js';
-import './observability/tracing/setup.js';
+// Initialize observability modules first
+import '../shared/observability/logging/logger.js';
+import '../shared/observability/tracing/setup.js';
 
 import app from './app.js';
-import config from './config/index.js';
-import Logger from './observability/logging/logger.js';
-import { MessageBrokerFactory } from './messaging/MessageBrokerFactory.js';
-import { IMessageBroker } from './messaging/IMessageBroker.js';
-import DatabaseService from './services/database.service.js';
+import config from '../shared/config/index.js';
+import Logger from '../shared/observability/logging/logger.js';
+import DatabaseService from '../shared/services/database.service.js';
 import { Server } from 'http';
 import { handleUncaughtException, handleUnhandledRejection } from './middlewares/error.middleware.js';
 
@@ -21,7 +25,6 @@ const logger = new Logger();
 process.on('uncaughtException', handleUncaughtException);
 process.on('unhandledRejection', handleUnhandledRejection);
 
-const messageBroker: IMessageBroker = MessageBrokerFactory.create();
 let server: Server;
 let isShuttingDown = false;
 
@@ -47,11 +50,13 @@ const startServer = async (): Promise<void> => {
     server.keepAliveTimeout = 65000; // 65 seconds
     server.headersTimeout = 66000; // 66 seconds
 
-    // Start message broker consumer
-    logger.info(`🔌 Connecting to message broker...`);
-    await messageBroker.connect();
-    await messageBroker.startConsuming();
-    logger.info(`🎯 Message consumer started - listening for events`);
+    // Test database connection
+    const dbService = DatabaseService.getInstance();
+    await dbService.testConnection();
+    logger.info('✅ Database connection established');
+
+    logger.info('⚠️  Note: This is the admin API only. For message processing, run the worker.');
+    logger.info('✅ Admin API is ready');
 
     // Enhanced graceful shutdown
     const gracefulShutdown = async (signal: string) => {
@@ -73,10 +78,6 @@ const startServer = async (): Promise<void> => {
         // Stop accepting new connections
         server.close(async () => {
           logger.info('🔌 HTTP server closed');
-
-          // Stop message broker consumer and close connections
-          logger.info('🔌 Closing message broker connections...');
-          await messageBroker.close();
 
           // Close database connections
           logger.info('🔌 Closing database connections...');
