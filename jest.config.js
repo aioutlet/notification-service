@@ -5,11 +5,12 @@ export default {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': [
+    '^.+\.ts$': [
       'ts-jest',
       {
         useESM: true,
-        isolatedModules: true, // Skip type checking for faster tests
+        isolatedModules: true,
+        tsconfig: 'tsconfig.test.json',
       },
     ],
   },
@@ -27,8 +28,11 @@ export default {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  modulePaths: ['<rootDir>/src'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  clearMocks: true,
+  resetMocks: false,
+  restoreMocks: false,
   // Environment variables for testing
   setupFiles: ['<rootDir>/tests/env.ts'],
   // Make Jest globals available

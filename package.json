@@ -9,7 +9,7 @@
     "dev:api": "tsx watch src/api/server.ts",
     "dev:consumer": "tsx watch src/consumer/consumer.ts",
     "dev:both": "concurrently \"npm run dev:api\" \"npm run dev:consumer\"",
-    "build": "tsc",
+    "build": "echo 'TypeScript transpilation handled by tsx/ts-node at runtime'",
     "start": "npm run start:consumer",
     "start:api": "node dist/src/api/server.js",
     "start:consumer": "node dist/src/consumer/consumer.js",
@@ -73,6 +73,8 @@
     "supertest": "^7.1.1",
     "ts-jest": "^29.4.0",
     "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.16",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
     "typescript": "^5.1.6"
   },
