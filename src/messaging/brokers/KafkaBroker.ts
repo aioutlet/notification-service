@@ -52,6 +52,12 @@ export class KafkaBroker implements IMessageBroker {
     logger.debug(`Registered event handler for: ${eventType}`);
   }
 
+  async publishEvent(eventType: string, eventData: any, correlationId?: string): Promise<void> {
+    // TODO: Implement Kafka event publishing
+    logger.warn('⚠️ KafkaBroker.publishEvent not yet implemented', { eventType, correlationId });
+    throw new Error('Kafka publishing not yet implemented');
+  }
+
   async startConsuming(): Promise<void> {
     // TODO: Implement Kafka consumer
     // Example implementation:

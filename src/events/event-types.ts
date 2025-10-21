@@ -19,11 +19,9 @@ export enum EventTypes {
 
   // Auth events
   AUTH_USER_REGISTERED = 'auth.user.registered',
-  AUTH_LOGIN = 'auth.login',
   AUTH_EMAIL_VERIFICATION_REQUESTED = 'auth.email.verification.requested',
   AUTH_PASSWORD_RESET_REQUESTED = 'auth.password.reset.requested',
   AUTH_PASSWORD_RESET_COMPLETED = 'auth.password.reset.completed',
-  AUTH_ACCOUNT_REACTIVATION_REQUESTED = 'auth.account.reactivation.requested',
 
   // Order events
   ORDER_PLACED = 'order.placed',
@@ -36,6 +34,10 @@ export enum EventTypes {
   PROFILE_PASSWORD_CHANGED = 'profile.password_changed',
   PROFILE_NOTIFICATION_PREFERENCES_UPDATED = 'profile.notification_preferences_updated',
   PROFILE_BANK_DETAILS_UPDATED = 'profile.bank_details_updated',
+
+  // Notification outcome events (published by notification-service for audit)
+  NOTIFICATION_SENT = 'notification.sent',
+  NOTIFICATION_FAILED = 'notification.failed',
 }
 
 // Specific event interfaces
@@ -60,19 +62,14 @@ export interface UserEvent extends BaseEvent {
 export interface AuthEvent extends BaseEvent {
   eventType:
     | EventTypes.AUTH_USER_REGISTERED
-    | EventTypes.AUTH_LOGIN
     | EventTypes.AUTH_EMAIL_VERIFICATION_REQUESTED
     | EventTypes.AUTH_PASSWORD_RESET_REQUESTED
-    | EventTypes.AUTH_PASSWORD_RESET_COMPLETED
-    | EventTypes.AUTH_ACCOUNT_REACTIVATION_REQUESTED;
+    | EventTypes.AUTH_PASSWORD_RESET_COMPLETED;
   data: {
     username?: string;
     email?: string;
     verificationToken?: string;
     resetToken?: string;
-    reactivationToken?: string;
-    ipAddress?: string;
-    userAgent?: string;
   };
 }
 
@@ -105,6 +102,20 @@ export interface ProfileEvent extends BaseEvent {
     field: string;
     oldValue?: any;
     newValue?: any;
+  };
+}
+
+export interface NotificationOutcomeEvent extends BaseEvent {
+  eventType: EventTypes.NOTIFICATION_SENT | EventTypes.NOTIFICATION_FAILED;
+  data: {
+    notificationId: string;
+    originalEventType: string; // The original event that triggered this notification
+    channel: 'email' | 'sms' | 'push' | 'webhook';
+    recipientEmail?: string;
+    recipientPhone?: string;
+    subject?: string;
+    errorMessage?: string; // For failed notifications
+    attemptNumber: number;
   };
 }
 

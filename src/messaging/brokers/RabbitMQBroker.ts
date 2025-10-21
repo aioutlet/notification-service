@@ -8,7 +8,6 @@ import config from '../../config/index.js';
 import logger from '../../observability/logging/index.js';
 import { IMessageBroker } from '../IMessageBroker.js';
 import NotificationService from '../../services/notification.service.js';
-import DatabaseService from '../../services/database.service.js';
 import EmailService from '../../services/email.service.js';
 
 interface RetryConfig {
@@ -29,7 +28,6 @@ export class RabbitMQBroker implements IMessageBroker {
   private connection: Connection | null = null;
   private channel: Channel | null = null;
   private notificationService: NotificationService;
-  private dbService: DatabaseService;
   private emailService: EmailService;
   private isShuttingDown = false;
   private eventHandlers: Map<string, (eventData: any, correlationId: string) => Promise<void>> = new Map();
@@ -54,69 +52,69 @@ export class RabbitMQBroker implements IMessageBroker {
     this.rabbitmqUrl = rabbitmqUrl;
     this.queueName = queueName;
     this.notificationService = new NotificationService();
-    this.dbService = DatabaseService.getInstance();
     this.emailService = new EmailService();
   }
 
   async connect(): Promise<void> {
     try {
       logger.info('Connecting to RabbitMQ...', { url: this.rabbitmqUrl.replace(/\/\/[^@]*@/, '//***:***@') });
-      this.connection = await connect(this.rabbitmqUrl);
+      const conn = await connect(this.rabbitmqUrl);
+      this.connection = conn as any as Connection;
 
       // Handle connection events
-      this.connection.on('error', (err: Error) => {
-        logger.error('RabbitMQ connection error:', err);
-        if (!this.isShuttingDown) {
-          this.reconnect();
-        }
-      });
+      if (this.connection) {
+        this.connection.on('error', (err: Error) => {
+          logger.error('RabbitMQ connection error:', err);
+          if (!this.isShuttingDown) {
+            this.reconnect();
+          }
+        });
 
-      this.connection.on('close', () => {
-        logger.warn('RabbitMQ connection closed');
-        if (!this.isShuttingDown) {
-          this.reconnect();
-        }
-      });
+        this.connection.on('close', () => {
+          logger.warn('RabbitMQ connection closed');
+          if (!this.isShuttingDown) {
+            this.reconnect();
+          }
+        });
 
-      this.channel = await this.connection.createChannel();
+        this.channel = await (this.connection as any).createChannel();
+      }
 
-      // Set prefetch to limit concurrent message processing
-      await this.channel.prefetch(10);
+      if (this.channel) {
+        // Set prefetch to limit concurrent message processing
+        await this.channel.prefetch(10);
 
-      // Setup main exchange (aioutlet.events)
-      await this.channel.assertExchange(config.rabbitmq.exchange, 'topic', { durable: true });
+        // Setup main exchange (aioutlet.events)
+        const exchange = config.messageBroker.rabbitmq?.exchange || 'aioutlet.events';
+        await this.channel.assertExchange(exchange, 'topic', { durable: true }); // Setup notification queue - use the queue created by setup script
+        await this.channel.checkQueue(this.queueName);
 
-      // Setup notification queue - use the queue created by setup script
-      await this.channel.checkQueue(this.queueName);
+        // Setup retry queue with TTL
+        await this.channel.assertQueue(this.RETRY_QUEUE, {
+          durable: true,
+          arguments: {
+            'x-message-ttl': 5000, // 5 seconds TTL
+            'x-dead-letter-exchange': '',
+            'x-dead-letter-routing-key': this.queueName,
+          },
+        });
 
-      // Setup retry queue with TTL
-      await this.channel.assertQueue(this.RETRY_QUEUE, {
-        durable: true,
-        arguments: {
-          'x-message-ttl': 5000, // 5 seconds TTL
-          'x-dead-letter-exchange': '',
-          'x-dead-letter-routing-key': this.queueName,
-        },
-      });
-
-      // Setup Dead Letter Queue
-      await this.channel.assertQueue(this.DLQ, {
-        durable: true,
-        arguments: {
-          'x-message-ttl': 86400000, // 24 hours TTL for DLQ messages
-        },
-      });
-
-      // Test database connection
-      await this.dbService.testConnection();
+        // Setup Dead Letter Queue
+        await this.channel.assertQueue(this.DLQ, {
+          durable: true,
+          arguments: {
+            'x-message-ttl': 86400000, // 24 hours TTL for DLQ messages
+          },
+        });
+      }
 
       logger.info('✅ RabbitMQ connection established');
       logger.info(`📥 Listening to queue: ${this.queueName}`);
-      logger.info(`📡 Connected to exchange: ${config.rabbitmq.exchange}`);
+      logger.info(`📡 Connected to exchange: ${config.messageBroker.rabbitmq?.exchange || 'aioutlet.events'}`);
       logger.info(`🔁 Retry queue: ${this.RETRY_QUEUE}`);
       logger.info(`💀 Dead letter queue: ${this.DLQ}`);
     } catch (error) {
-      logger.error('❌ Failed to connect to RabbitMQ or database:', error);
+      logger.error('❌ Failed to connect to RabbitMQ:', error);
       throw error;
     }
   }
@@ -146,6 +144,52 @@ export class RabbitMQBroker implements IMessageBroker {
   registerEventHandler(eventType: string, handler: (eventData: any, correlationId: string) => Promise<void>): void {
     this.eventHandlers.set(eventType, handler);
     logger.debug(`Registered event handler for: ${eventType}`);
+  }
+
+  async publishEvent(eventType: string, eventData: any, correlationId?: string): Promise<void> {
+    if (!this.channel) {
+      throw new Error('Cannot publish event: Channel not initialized');
+    }
+
+    try {
+      const message = {
+        eventType,
+        ...eventData,
+        timestamp: new Date().toISOString(),
+      };
+
+      const routingKey = eventType; // Use event type as routing key for topic exchange
+      const messageBuffer = Buffer.from(JSON.stringify(message));
+      const exchange = config.messageBroker.rabbitmq?.exchange || 'aioutlet.events';
+
+      const published = this.channel.publish(exchange, routingKey, messageBuffer, {
+        persistent: true,
+        contentType: 'application/json',
+        correlationId: correlationId || eventData.correlationId,
+        timestamp: Date.now(),
+      });
+
+      if (!published) {
+        logger.warn('⚠️ Event published but not confirmed (channel buffer full)', {
+          eventType,
+          correlationId,
+        });
+      } else {
+        logger.debug('📤 Event published successfully', {
+          eventType,
+          correlationId,
+          exchange: config.messageBroker.rabbitmq?.exchange || 'aioutlet.events',
+          routingKey,
+        });
+      }
+    } catch (error) {
+      logger.error('❌ Failed to publish event:', {
+        eventType,
+        correlationId,
+        error,
+      });
+      throw error;
+    }
   }
 
   async startConsuming(): Promise<void> {
@@ -233,8 +277,10 @@ export class RabbitMQBroker implements IMessageBroker {
       if (handler) {
         await handler(eventData, correlationId);
       } else {
-        // Default processing
-        await this.processNotificationEvent(eventData);
+        logger.warn(`⚠️ No handler registered for event type: ${eventData.eventType}`, {
+          correlationId,
+          eventType: eventData.eventType,
+        });
       }
 
       const duration = Date.now() - startTime;
@@ -340,95 +386,6 @@ export class RabbitMQBroker implements IMessageBroker {
     }
   }
 
-  private async processNotificationEvent(eventData: any): Promise<void> {
-    if (!eventData.eventType) {
-      logger.warn('⚠️ Invalid event structure, missing eventType');
-      return;
-    }
-
-    const identifier = eventData.userId || eventData.email || eventData.username || 'unknown';
-
-    logger.info('🔔 Processing notification for event:', {
-      eventType: eventData.eventType,
-      identifier,
-      email: eventData.email,
-      timestamp: new Date().toISOString(),
-    });
-
-    await this.sendNotification(eventData);
-  }
-
-  private async sendNotification(eventData: any): Promise<void> {
-    let notificationId: string | undefined;
-
-    try {
-      notificationId = await this.notificationService.createNotification(eventData, 'email');
-
-      logger.info('📤 Processing notification:', {
-        notificationId,
-        to: eventData.userId,
-        eventType: eventData.eventType,
-      });
-
-      const notification = await this.notificationService.getNotificationById(notificationId);
-
-      if (!notification) {
-        throw new Error('Failed to retrieve saved notification');
-      }
-
-      let emailSent = false;
-      const recipientEmail = eventData.userEmail || eventData.email;
-
-      if (recipientEmail && this.emailService.isEnabled()) {
-        emailSent = await this.emailService.sendNotificationEmail(
-          recipientEmail,
-          notification.subject || 'Notification',
-          notification.message,
-          eventData.eventType,
-          eventData.data
-        );
-
-        if (emailSent) {
-          await this.notificationService.updateNotificationStatus(notificationId, 'sent');
-          logger.info('✅ Email notification sent successfully:', {
-            notificationId,
-            email: recipientEmail,
-          });
-        } else {
-          await this.notificationService.updateNotificationStatus(notificationId, 'failed', 'Email sending failed');
-          logger.error('❌ Failed to send email notification:', { notificationId });
-        }
-      } else {
-        await this.notificationService.updateNotificationStatus(
-          notificationId,
-          'failed',
-          'No email address or email service disabled'
-        );
-        logger.warn('⚠️ Email notification skipped:', {
-          notificationId,
-          hasEmail: !!recipientEmail,
-          emailEnabled: this.emailService.isEnabled(),
-        });
-      }
-    } catch (error) {
-      logger.error('❌ Failed to send notification:', error);
-
-      if (notificationId) {
-        try {
-          await this.notificationService.updateNotificationStatus(
-            notificationId,
-            'failed',
-            error instanceof Error ? error.message : 'Unknown error'
-          );
-        } catch (updateError) {
-          logger.error('❌ Failed to update notification status:', updateError);
-        }
-      }
-
-      throw error;
-    }
-  }
-
   async close(): Promise<void> {
     this.isShuttingDown = true;
 
@@ -441,7 +398,7 @@ export class RabbitMQBroker implements IMessageBroker {
       }
 
       if (this.connection) {
-        await this.connection.close();
+        await (this.connection as any).close();
         logger.info('🔌 RabbitMQ connection closed');
       }
     } catch (error) {

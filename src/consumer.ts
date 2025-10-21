@@ -5,15 +5,14 @@
  */
 
 // Initialize observability modules first
-import '../shared/observability/logging/logger.js';
-import '../shared/observability/tracing/setup.js';
+import './observability/logging/logger.js';
+import './observability/tracing/setup.js';
 
-import Logger from '../shared/observability/logging/logger.js';
-import { MessageBrokerFactory } from '../shared/messaging/MessageBrokerFactory.js';
-import { IMessageBroker } from '../shared/messaging/IMessageBroker.js';
-import DatabaseService from '../shared/services/database.service.js';
-import config from '../shared/config/index.js';
-import { registerEventHandlers } from './handlers/index.js';
+import Logger from './observability/logging/logger.js';
+import { MessageBrokerFactory } from './messaging/MessageBrokerFactory.js';
+import { IMessageBroker } from './messaging/IMessageBroker.js';
+import config from './config/index.js';
+import { registerEventHandlers } from './handlers.js';
 
 const logger = new Logger();
 
@@ -30,11 +29,6 @@ const startConsumer = async (): Promise<void> => {
       `📍 Service: ${process.env.SERVICE_NAME || 'notification-service'} v${process.env.SERVICE_VERSION || '1.0.0'}`
     );
     logger.info(`🌍 Environment: ${config.server.env}`);
-
-    // Test database connection
-    const dbService = DatabaseService.getInstance();
-    await dbService.testConnection();
-    logger.info('✅ Database connection established');
 
     // Create and connect message broker
     logger.info(`🔌 Connecting to message broker (${process.env.MESSAGE_BROKER_TYPE || 'rabbitmq'})...`);
