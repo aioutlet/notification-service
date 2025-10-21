@@ -111,6 +111,49 @@ class AuthMiddleware {
       throw new Error('Admin access required');
     }
   };
+
+  // Require specific roles
+  static requireRoles = (...roles: string[]) => {
+    return (req: AuthRequest, res: Response, next: NextFunction) => {
+      if (!req.user) {
+        logger.warn('🚫 Authorization failed: No user', {
+          ip: req.ip,
+          path: req.path,
+        });
+        res.status(401);
+        throw new Error('Authentication required');
+      }
+
+      const userRole = req.user.role;
+      const hasRole = roles.includes(userRole);
+
+      if (!hasRole) {
+        logger.warn('🚫 Authorization failed: Insufficient roles', {
+          userId: req.user.id,
+          requiredRoles: roles,
+          userRole,
+          ip: req.ip,
+          path: req.path,
+        });
+        res.status(403);
+        throw new Error(`Required roles: ${roles.join(' or ')}`);
+      }
+
+      logger.info('✅ Authorization successful', {
+        userId: req.user.id,
+        role: userRole,
+        ip: req.ip,
+        path: req.path,
+      });
+
+      next();
+    };
+  };
+
+  // Customer role requirement (customer or admin)
+  static customer = (req: AuthRequest, res: Response, next: NextFunction) => {
+    return AuthMiddleware.requireRoles('customer', 'admin')(req, res, next);
+  };
 }
 
 export default AuthMiddleware;
@@ -119,3 +162,5 @@ export { AuthRequest };
 // Export convenient aliases for functional style
 export const protect = AuthMiddleware.protect;
 export const admin = AuthMiddleware.admin;
+export const requireRoles = AuthMiddleware.requireRoles;
+export const customer = AuthMiddleware.customer;
