@@ -37,7 +37,7 @@ const startConsumer = async (): Promise<void> => {
     logger.info('✅ Message broker connected');
 
     // Register event handlers
-    registerEventHandlers(messageBroker);
+    await registerEventHandlers(messageBroker);
     logger.info('📝 Event handlers registered');
 
     // Start consuming messages

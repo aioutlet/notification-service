@@ -143,9 +143,19 @@ export class RabbitMQBroker implements IMessageBroker {
     process.exit(1);
   }
 
-  registerEventHandler(eventType: string, handler: (eventData: any, correlationId: string) => Promise<void>): void {
+  async registerEventHandler(
+    eventType: string,
+    handler: (eventData: any, correlationId: string) => Promise<void>
+  ): Promise<void> {
     this.eventHandlers.set(eventType, handler);
     logger.debug(`Registered event handler for: ${eventType}`);
+
+    // Bind the queue to the exchange with this routing key (if channel is ready)
+    if (this.channel) {
+      const exchange = config.messageBroker.rabbitmq?.exchange || 'aioutlet.events';
+      await this.channel.bindQueue(this.queueName, exchange, eventType);
+      logger.debug(`Bound queue ${this.queueName} to exchange ${exchange} with routing key: ${eventType}`);
+    }
   }
 
   async publishEvent(eventType: string, eventData: any, correlationId?: string): Promise<void> {
@@ -259,6 +269,12 @@ export class RabbitMQBroker implements IMessageBroker {
           eventType: eventData.topic,
           ...eventData.data,
         };
+      }
+
+      // Flatten nested data structure: if there's a nested 'data' object, merge it to root
+      if (eventData.data && typeof eventData.data === 'object') {
+        const { data, ...rest } = eventData;
+        eventData = { ...rest, ...data };
       }
 
       // Ensure userId is set for database insertion (required field)

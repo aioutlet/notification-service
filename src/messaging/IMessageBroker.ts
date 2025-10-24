@@ -22,7 +22,10 @@ export interface IMessageBroker {
    * @param eventType - The type of event to handle
    * @param handler - Function to process the event
    */
-  registerEventHandler(eventType: string, handler: (eventData: any, correlationId: string) => Promise<void>): void;
+  registerEventHandler(
+    eventType: string,
+    handler: (eventData: any, correlationId: string) => Promise<void>
+  ): void | Promise<void>;
 
   /**
    * Publish an event to the message broker

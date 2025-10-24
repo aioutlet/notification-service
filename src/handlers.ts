@@ -190,7 +190,7 @@ const handleNotificationEvent = async (
 /**
  * Register all event handlers with the message broker
  */
-export const registerEventHandlers = (messageBroker: IMessageBroker): void => {
+export const registerEventHandlers = async (messageBroker: IMessageBroker): Promise<void> => {
   logger.info('📝 Registering event handlers...');
 
   // Create a wrapper that passes messageBroker to the handler
@@ -200,37 +200,46 @@ export const registerEventHandlers = (messageBroker: IMessageBroker): void => {
 
   // Register handlers for all event types
   // Auth events
-  messageBroker.registerEventHandler(EventTypes.AUTH_USER_REGISTERED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(
+  await messageBroker.registerEventHandler(EventTypes.AUTH_USER_REGISTERED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(
     EventTypes.AUTH_EMAIL_VERIFICATION_REQUESTED,
     createHandler(handleNotificationEvent)
   );
-  messageBroker.registerEventHandler(EventTypes.AUTH_PASSWORD_RESET_REQUESTED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.AUTH_PASSWORD_RESET_COMPLETED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(
+    EventTypes.AUTH_PASSWORD_RESET_REQUESTED,
+    createHandler(handleNotificationEvent)
+  );
+  await messageBroker.registerEventHandler(
+    EventTypes.AUTH_PASSWORD_RESET_COMPLETED,
+    createHandler(handleNotificationEvent)
+  );
 
   // User events
-  messageBroker.registerEventHandler(EventTypes.USER_CREATED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.USER_UPDATED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.USER_DELETED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.USER_EMAIL_VERIFIED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.USER_PASSWORD_CHANGED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.USER_CREATED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.USER_UPDATED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.USER_DELETED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.USER_EMAIL_VERIFIED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.USER_PASSWORD_CHANGED, createHandler(handleNotificationEvent));
 
   // Order events
-  messageBroker.registerEventHandler(EventTypes.ORDER_PLACED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.ORDER_CANCELLED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.ORDER_DELIVERED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.ORDER_PLACED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.ORDER_CANCELLED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.ORDER_DELIVERED, createHandler(handleNotificationEvent));
 
   // Payment events
-  messageBroker.registerEventHandler(EventTypes.PAYMENT_RECEIVED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(EventTypes.PAYMENT_FAILED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.PAYMENT_RECEIVED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(EventTypes.PAYMENT_FAILED, createHandler(handleNotificationEvent));
 
   // Profile events
-  messageBroker.registerEventHandler(EventTypes.PROFILE_PASSWORD_CHANGED, createHandler(handleNotificationEvent));
-  messageBroker.registerEventHandler(
+  await messageBroker.registerEventHandler(EventTypes.PROFILE_PASSWORD_CHANGED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(
     EventTypes.PROFILE_NOTIFICATION_PREFERENCES_UPDATED,
     createHandler(handleNotificationEvent)
   );
-  messageBroker.registerEventHandler(EventTypes.PROFILE_BANK_DETAILS_UPDATED, createHandler(handleNotificationEvent));
+  await messageBroker.registerEventHandler(
+    EventTypes.PROFILE_BANK_DETAILS_UPDATED,
+    createHandler(handleNotificationEvent)
+  );
 
   logger.info('✅ Event handlers registered successfully');
   logger.info('📋 Registered: Auth (6), User (5), Order (3), Payment (2), Profile (3)');
