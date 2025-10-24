@@ -86,8 +86,10 @@ export class RabbitMQBroker implements IMessageBroker {
 
         // Setup main exchange (aioutlet.events)
         const exchange = config.messageBroker.rabbitmq?.exchange || 'aioutlet.events';
-        await this.channel.assertExchange(exchange, 'topic', { durable: true }); // Setup notification queue - use the queue created by setup script
-        await this.channel.checkQueue(this.queueName);
+        await this.channel.assertExchange(exchange, 'topic', { durable: true });
+
+        // Setup notification queue - create if it doesn't exist
+        await this.channel.assertQueue(this.queueName, { durable: true });
 
         // Setup retry queue with TTL
         await this.channel.assertQueue(this.RETRY_QUEUE, {
