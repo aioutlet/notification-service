@@ -13,6 +13,7 @@ import { MessageBrokerFactory } from './messaging/MessageBrokerFactory.js';
 import { IMessageBroker } from './messaging/IMessageBroker.js';
 import config from './config/index.js';
 import { registerEventHandlers } from './handlers.js';
+import { startHealthServer } from './server.js';
 
 const logger = new Logger();
 
@@ -29,6 +30,9 @@ const startConsumer = async (): Promise<void> => {
       `📍 Service: ${process.env.SERVICE_NAME || 'notification-service'} v${process.env.SERVICE_VERSION || '1.0.0'}`
     );
     logger.info(`🌍 Environment: ${config.server.env}`);
+
+    // Start health check server
+    startHealthServer();
 
     // Create and connect message broker
     logger.info(`🔌 Connecting to message broker (${process.env.MESSAGE_BROKER_TYPE || 'rabbitmq'})...`);
