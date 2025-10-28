@@ -176,6 +176,14 @@ class EmailService {
       // Generate HTML email content
       const htmlContent = this.generateEmailHTML(message, eventType, eventData);
 
+      logger.debug('📧 Generated email HTML:', {
+        recipientEmail,
+        subject,
+        hasHtml: !!htmlContent,
+        htmlLength: htmlContent.length,
+        textLength: message.length,
+      });
+
       const emailOptions: EmailOptions = {
         to: recipientEmail,
         subject,
@@ -190,8 +198,11 @@ class EmailService {
     }
   }
 
-  private generateEmailHTML(message: string, eventType: string, eventData?: any): string {
-    // Basic HTML template - this can be enhanced with proper templates later
+  private generateEmailHTML(message: string, eventType: string, _eventData?: any): string {
+    // Convert plain text message to HTML with clickable links
+    const htmlMessage = this.convertTextToHTML(message);
+
+    // Basic HTML template
     return `
 <!DOCTYPE html>
 <html>
@@ -202,9 +213,13 @@ class EmailService {
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
-        .content { background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; }
+        .content { background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; word-wrap: break-word; overflow-wrap: break-word; }
         .footer { background-color: #333; color: white; padding: 10px; text-align: center; font-size: 12px; border-radius: 0 0 5px 5px; }
         .event-type { background-color: #e7f3ff; padding: 5px 10px; border-radius: 3px; font-size: 12px; display: inline-block; margin-bottom: 10px; }
+        .btn { display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin: 15px 0; font-weight: bold; }
+        .btn:hover { background-color: #45a049; }
+        a { color: #4CAF50; text-decoration: none; word-wrap: break-word; overflow-wrap: break-word; display: inline-block; max-width: 100%; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -214,20 +229,8 @@ class EmailService {
     <div class="content">
         <div class="event-type">Event: ${eventType}</div>
         <div style="font-size: 16px; margin: 20px 0;">
-            ${message}
+            ${htmlMessage}
         </div>
-        ${
-          eventData
-            ? `
-        <div style="margin-top: 20px; padding: 10px; background-color: #fff; border-left: 4px solid #4CAF50;">
-            <strong>Event Details:</strong><br>
-            <code style="background-color: #f4f4f4; padding: 10px; display: block; margin-top: 5px; border-radius: 3px;">
-                ${JSON.stringify(eventData, null, 2)}
-            </code>
-        </div>
-        `
-            : ''
-        }
     </div>
     <div class="footer">
         <p>This is an automated notification from AI Outlet. Please do not reply to this email.</p>
@@ -236,6 +239,46 @@ class EmailService {
 </body>
 </html>
     `.trim();
+  }
+
+  /**
+   * Convert plain text to HTML with clickable links
+   * - Converts URLs to <a> tags
+   * - Converts newlines to <br> tags
+   * - Escapes HTML special characters (except for URLs)
+   */
+  private convertTextToHTML(text: string): string {
+    // First, convert URLs to clickable links BEFORE escaping HTML
+    // This regex matches http:// and https:// URLs
+    let html = text.replace(/(https?:\/\/[^\s]+)/gi, (url) => {
+      // Create a placeholder that won't be escaped
+      return `<a href="${url}" style="color: #4CAF50; text-decoration: none; font-weight: bold;">${url}</a>`;
+    });
+
+    // Now escape HTML special characters in the text between links
+    // We need to be careful not to escape the <a> tags we just created
+    // Split by <a> tags and only escape the text parts
+    const parts = html.split(/(<a[^>]*>.*?<\/a>)/g);
+    html = parts
+      .map((part) => {
+        // Don't escape the link tags (odd indices)
+        if (part.startsWith('<a')) {
+          return part;
+        }
+        // Escape HTML in text parts (even indices)
+        return part
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      })
+      .join('');
+
+    // Convert newlines to <br> tags
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
   }
 
   async testEmailService(): Promise<boolean> {

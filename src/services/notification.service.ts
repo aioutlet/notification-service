@@ -107,16 +107,19 @@ class NotificationService {
       userPhone: eventData.userPhone,
       eventType: eventData.eventType,
       timestamp: eventData.timestamp,
-      ...eventData.data,
     };
 
-    // Add event-specific variables
-    if ('email' in eventData) {
-      variables.email = (eventData as any).email;
-    }
+    // Spread all root-level properties from eventData
+    // This handles cases where fields are sent at root level (like Auth Service events)
+    Object.keys(eventData).forEach((key) => {
+      if (key !== 'data' && eventData[key as keyof NotificationEvent] !== undefined) {
+        variables[key] = eventData[key as keyof NotificationEvent];
+      }
+    });
 
-    if ('username' in eventData) {
-      variables.username = (eventData as any).username;
+    // Also spread data property if it exists (nested structure)
+    if (eventData.data) {
+      Object.assign(variables, eventData.data);
     }
 
     return variables;
