@@ -15,7 +15,7 @@ class Logger {
     const envConfig = ENVIRONMENT_CONFIGS[environment] || ENVIRONMENT_CONFIGS.development;
 
     // Get service name early for path calculation
-    const serviceName = process.env.SERVICE_NAME || config.serviceName || envConfig.serviceName;
+    const serviceName = process.env.NAME || config.serviceName || envConfig.serviceName;
 
     // Merge configurations: env vars > passed config > env defaults > global defaults
     // All values are overridden by environment variables
@@ -25,7 +25,7 @@ class Logger {
       ...config,
       // Override with environment variables
       serviceName: serviceName,
-      version: process.env.SERVICE_VERSION || '1.0.0',
+      version: process.env.VERSION || '1.0.0',
       environment: environment,
       logLevel: (process.env.LOG_LEVEL || config.logLevel || envConfig.logLevel) as keyof typeof LOG_LEVELS,
       format: (process.env.LOG_FORMAT || config.format || envConfig.format) as 'json' | 'console',

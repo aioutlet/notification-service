@@ -70,8 +70,8 @@ const config: Config = {
     port: parseInt(process.env.PORT || '3003'),
     host: process.env.HOST || 'localhost',
     env: process.env.NODE_ENV || 'development',
-    serviceName: process.env.SERVICE_NAME || 'notification-service',
-    serviceVersion: process.env.SERVICE_VERSION || '1.0.0',
+    serviceName: process.env.NAME || 'notification-service',
+    serviceVersion: process.env.VERSION || '1.0.0',
   },
   messageBroker: {
     type: brokerType,

@@ -26,9 +26,7 @@ let isShuttingDown = false;
 const startConsumer = async (): Promise<void> => {
   try {
     logger.info('🚀 Starting Notification Consumer...');
-    logger.info(
-      `📍 Service: ${process.env.SERVICE_NAME || 'notification-service'} v${process.env.SERVICE_VERSION || '1.0.0'}`
-    );
+    logger.info(`📍 Service: ${process.env.NAME || 'notification-service'} v${process.env.VERSION || '1.0.0'}`);
     logger.info(`🌍 Environment: ${config.server.env}`);
 
     // Start health check server

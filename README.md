@@ -41,8 +41,8 @@ Message Broker → Notification Service → Email/SMS/Push
 ```bash
 # Service
 NODE_ENV=development
-SERVICE_NAME=notification-service
-SERVICE_VERSION=1.0.0
+NAME=notification-service
+VERSION=1.0.0
 
 # Message Broker
 MESSAGE_BROKER_TYPE=rabbitmq

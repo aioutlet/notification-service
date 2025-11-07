@@ -11,8 +11,8 @@ import { isTracingEnabled } from './setup.js';
  */
 export function getServiceInfo(): { serviceName: string; serviceVersion: string } {
   return {
-    serviceName: process.env.SERVICE_NAME || process.env.OTEL_SERVICE_NAME || 'notification-service',
-    serviceVersion: process.env.SERVICE_VERSION || process.env.OTEL_SERVICE_VERSION || '1.0.0',
+    serviceName: process.env.NAME || process.env.OTEL_SERVICE_NAME || 'notification-service',
+    serviceVersion: process.env.VERSION || process.env.OTEL_SERVICE_VERSION || '1.0.0',
   };
 }
 
