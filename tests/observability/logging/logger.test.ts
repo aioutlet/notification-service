@@ -1,4 +1,4 @@
-import logger from '../../../src/shared/observability/logging/index.js';
+import logger from '../../../src/observability/logging/index.js';
 
 // Extend global types for Jest
 declare const jest: any;
@@ -140,8 +140,8 @@ describe('Logger', () => {
 
   describe('logger instance', () => {
     it('should be a singleton instance', () => {
-      const logger1 = require('../../../src/shared/observability/logging/index.js').default;
-      const logger2 = require('../../../src/shared/observability/logging/index.js').default;
+      const logger1 = require('../../../src/observability/logging/index.js').default;
+      const logger2 = require('../../../src/observability/logging/index.js').default;
 
       expect(logger1).toBe(logger2);
     });

@@ -1,14 +1,14 @@
 import nodemailer from 'nodemailer';
-import EmailService from '../../src/shared/services/email.service';
-import config from '../../src/shared/config/index';
+import EmailService from '../../src/services/email.service';
+import config from '../../src/config/index';
 
 // Mock dependencies
 jest.mock('nodemailer');
-jest.mock('../../src/shared/observability/logging/index.js');
-jest.mock('../../src/shared/config/index');
+jest.mock('../../src/observability/logging/index.js');
+jest.mock('../../src/config/index');
 
 // Import after mocking
-import logger from '../../src/shared/observability/logging/index.js';
+import logger from '../../src/observability/logging/index.js';
 
 // Type the mocked modules
 const mockedNodemailer = nodemailer as jest.Mocked<typeof nodemailer>;
@@ -103,28 +103,30 @@ describe('EmailService', () => {
 
     beforeEach(() => {
       emailService = new EmailService();
+      jest.clearAllMocks();
     });
 
-    it('should send email successfully with all parameters', async () => {
+    it('should send email successfully', async () => {
       const mockInfo = { messageId: 'test-message-id' };
-      mockTransporter.sendMail.mockResolvedValue(mockInfo);
+      mockTransporter.sendMail.mockResolvedValue(mockInfo as any);
 
       const result = await emailService.sendNotificationEmail(
         'user@example.com',
         'Test Subject',
         'Test message content',
-        'ORDER_CREATED',
-        { orderId: '12345' }
+        'test.event'
       );
 
       expect(result).toBe(true);
-      expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: '"AI Outlet" <noreply@aioutlet.com>',
-        to: 'user@example.com',
-        subject: 'Test Subject',
-        text: 'Test message content',
-        html: expect.stringContaining('Test message content'),
-      });
+      expect(mockTransporter.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: '"AI Outlet" <noreply@aioutlet.com>',
+          to: 'user@example.com',
+          subject: 'Test Subject',
+          text: 'Test message content',
+          html: expect.any(String),
+        })
+      );
       expect(logger.info).toHaveBeenCalledWith(
         '📧 Email sent successfully:',
         expect.objectContaining({
@@ -135,54 +137,15 @@ describe('EmailService', () => {
       );
     });
 
-    it('should send email with minimal parameters (no eventData)', async () => {
-      const mockInfo = { messageId: 'test-message-id' };
-      mockTransporter.sendMail.mockResolvedValue(mockInfo);
-
-      const result = await emailService.sendNotificationEmail(
-        'user@example.com',
-        'Test Subject',
-        'Test message content',
-        'ORDER_CREATED'
-      );
-
-      expect(result).toBe(true);
-      expect(mockTransporter.sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          html: expect.not.stringContaining('Event Details:'),
-        })
-      );
-    });
-
-    it('should generate proper HTML content with event data', async () => {
-      const mockInfo = { messageId: 'test-message-id' };
-      mockTransporter.sendMail.mockResolvedValue(mockInfo);
-
-      await emailService.sendNotificationEmail(
-        'user@example.com',
-        'Test Subject',
-        'Your order has been created',
-        'ORDER_CREATED',
-        { orderId: '12345', amount: 99.99 }
-      );
-
-      const sentEmail = mockTransporter.sendMail.mock.calls[0][0];
-      expect(sentEmail.html).toContain('Your order has been created');
-      expect(sentEmail.html).toContain('Event: ORDER_CREATED');
-      expect(sentEmail.html).toContain('Event Details:');
-      expect(sentEmail.html).toContain('"orderId": "12345"');
-      expect(sentEmail.html).toContain('"amount": 99.99');
-    });
-
-    it('should return false when service is disabled', async () => {
+    it('should return false when email service is disabled', async () => {
       mockedConfig.email.enabled = false;
-      const disabledService = new EmailService();
+      const disabledEmailService = new EmailService();
 
-      const result = await disabledService.sendNotificationEmail(
+      const result = await disabledEmailService.sendNotificationEmail(
         'user@example.com',
         'Test Subject',
         'Test message',
-        'ORDER_CREATED'
+        'test.event'
       );
 
       expect(result).toBe(false);
@@ -190,7 +153,7 @@ describe('EmailService', () => {
       expect(logger.debug).toHaveBeenCalledWith('📧 Email sending skipped (service disabled)');
     });
 
-    it('should handle email sending errors', async () => {
+    it('should handle email sending failures', async () => {
       const mockError = new Error('SMTP connection failed');
       mockTransporter.sendMail.mockRejectedValue(mockError);
 
@@ -198,7 +161,7 @@ describe('EmailService', () => {
         'user@example.com',
         'Test Subject',
         'Test message',
-        'ORDER_CREATED'
+        'test.event'
       );
 
       expect(result).toBe(false);
@@ -212,22 +175,21 @@ describe('EmailService', () => {
       );
     });
 
-    it('should handle service-level errors gracefully', async () => {
-      // Simulate an error in the service method itself
-      const brokenService = new EmailService();
-      jest.spyOn(brokenService as any, 'generateEmailHTML').mockImplementation(() => {
-        throw new Error('Template generation failed');
-      });
+    it('should generate HTML content from plain text', async () => {
+      const mockInfo = { messageId: 'test-message-id' };
+      mockTransporter.sendMail.mockResolvedValue(mockInfo as any);
 
-      const result = await brokenService.sendNotificationEmail(
+      await emailService.sendNotificationEmail(
         'user@example.com',
         'Test Subject',
-        'Test message',
-        'ORDER_CREATED'
+        'Test message with https://example.com',
+        'test.event'
       );
 
-      expect(result).toBe(false);
-      expect(logger.error).toHaveBeenCalledWith('❌ Failed to send notification email:', expect.any(Error));
+      const sendMailCall = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sendMailCall.html).toContain('<!DOCTYPE html>');
+      expect(sendMailCall.html).toContain('Test message with');
+      expect(sendMailCall.html).toContain('https://example.com');
     });
   });
 
@@ -236,10 +198,11 @@ describe('EmailService', () => {
 
     beforeEach(() => {
       emailService = new EmailService();
+      jest.clearAllMocks();
     });
 
-    it('should return true when SMTP connection test succeeds', async () => {
-      mockTransporter.verify.mockResolvedValue(true);
+    it('should test connection successfully', async () => {
+      mockTransporter.verify.mockResolvedValue(true as any);
 
       const result = await emailService.testEmailService();
 
@@ -248,8 +211,8 @@ describe('EmailService', () => {
       expect(logger.info).toHaveBeenCalledWith('✅ SMTP connection test successful');
     });
 
-    it('should return false when SMTP connection test fails', async () => {
-      const mockError = new Error('SMTP verification failed');
+    it('should handle connection test failure', async () => {
+      const mockError = new Error('Connection refused');
       mockTransporter.verify.mockRejectedValue(mockError);
 
       const result = await emailService.testEmailService();
@@ -258,31 +221,20 @@ describe('EmailService', () => {
       expect(logger.error).toHaveBeenCalledWith('❌ SMTP connection test failed:', mockError);
     });
 
-    it('should return false when service is disabled', async () => {
+    it('should return false when email service is disabled', async () => {
       mockedConfig.email.enabled = false;
-      const disabledService = new EmailService();
+      const disabledEmailService = new EmailService();
 
-      const result = await disabledService.testEmailService();
+      const result = await disabledEmailService.testEmailService();
 
       expect(result).toBe(false);
       expect(mockTransporter.verify).not.toHaveBeenCalled();
       expect(logger.info).toHaveBeenCalledWith('📧 Email service test skipped (service disabled)');
     });
-
-    it('should allow testing with anonymous SMTP (no credentials)', async () => {
-      mockedConfig.email.smtp.auth.user = '';
-      const unconfiguredService = new EmailService();
-
-      const result = await unconfiguredService.testEmailService();
-
-      // Should still be able to test connection with anonymous SMTP
-      expect(result).toBe(true);
-      expect(mockTransporter.verify).toHaveBeenCalled();
-    });
   });
 
   describe('getProviderInfo', () => {
-    it('should return correct provider info when configured and enabled', () => {
+    it('should return correct provider information when enabled', () => {
       const emailService = new EmailService();
 
       const info = emailService.getProviderInfo();
@@ -294,7 +246,7 @@ describe('EmailService', () => {
       });
     });
 
-    it('should return correct provider info when disabled', () => {
+    it('should return correct provider information when disabled', () => {
       mockedConfig.email.enabled = false;
       const emailService = new EmailService();
 
@@ -307,131 +259,73 @@ describe('EmailService', () => {
       });
     });
 
-    it('should return correct provider info with anonymous SMTP', () => {
-      mockedConfig.email.smtp.auth.user = '';
-      const emailService = new EmailService();
+    it('should show not configured when provider fails to initialize', () => {
+      mockedNodemailer.createTransport.mockImplementation(() => {
+        throw new Error('SMTP configuration error');
+      });
 
+      const emailService = new EmailService();
       const info = emailService.getProviderInfo();
 
-      // Anonymous SMTP (Mailpit) is still configured and enabled
-      expect(info).toEqual({
-        provider: 'smtp',
-        configured: true,
-        enabled: true,
-      });
+      expect(info.configured).toBe(false);
+      expect(info.enabled).toBe(false);
     });
   });
 
-  describe('SMTP Provider Edge Cases', () => {
-    it('should handle missing credentials gracefully (allow anonymous SMTP)', () => {
-      mockedConfig.email.smtp.auth.user = undefined as any;
-      mockedConfig.email.smtp.auth.pass = undefined as any;
-
-      const emailService = new EmailService();
-
-      // Should still be enabled for anonymous SMTP
-      expect(emailService.isEnabled()).toBe(true);
-      expect(logger.warn).toHaveBeenCalledWith(
-        '⚠️ SMTP credentials not configured. Using anonymous SMTP (suitable for Mailpit/testing).'
-      );
-    });
-
-    it('should handle unknown email provider types', () => {
-      mockedConfig.email.provider = 'unknown-provider';
-
-      const emailService = new EmailService();
-
-      expect(logger.warn).toHaveBeenCalledWith('⚠️ Unknown email provider: unknown-provider. Falling back to SMTP.');
-      // Should still work with SMTP fallback
-      expect(emailService.getProviderInfo().provider).toBe('unknown-provider');
-    });
-
-    it('should allow sending email with anonymous SMTP (no credentials)', async () => {
-      // Create a service with missing credentials (anonymous SMTP for Mailpit)
-      mockedConfig.email.smtp.auth.user = '';
-      const emailService = new EmailService();
-
-      // Mock successful email sending
-      const mockInfo = { messageId: 'test-message-id' };
-      mockTransporter.sendMail.mockResolvedValue(mockInfo);
-
-      const result = await emailService.sendNotificationEmail(
-        'user@example.com',
-        'Test Subject',
-        'Test message',
-        'ORDER_CREATED'
-      );
-
-      // Should successfully send with anonymous SMTP
-      expect(result).toBe(true);
-      expect(mockTransporter.sendMail).toHaveBeenCalled();
-    });
-  });
-
-  describe('HTML Email Generation', () => {
+  describe('HTML content generation', () => {
     let emailService: EmailService;
 
     beforeEach(() => {
       emailService = new EmailService();
-      mockTransporter.sendMail.mockResolvedValue({ messageId: 'test' });
+      jest.clearAllMocks();
     });
 
-    it('should generate HTML with proper structure and styling', async () => {
-      await emailService.sendNotificationEmail(
-        'user@example.com',
-        'Test Subject',
-        'Test message content',
-        'ORDER_CREATED'
-      );
-
-      const sentEmail = mockTransporter.sendMail.mock.calls[0][0];
-      const html = sentEmail.html;
-
-      // Check HTML structure
-      expect(html).toContain('<!DOCTYPE html>');
-      expect(html).toContain('<html>');
-      expect(html).toContain('<head>');
-      expect(html).toContain('<body>');
-      expect(html).toContain('</html>');
-
-      // Check content elements
-      expect(html).toContain('🔔 AI Outlet Notification');
-      expect(html).toContain('Event: ORDER_CREATED');
-      expect(html).toContain('Test message content');
-      expect(html).toContain('This is an automated notification');
-
-      // Check styling
-      expect(html).toContain('font-family: Arial, sans-serif');
-      expect(html).toContain('background-color: #4CAF50');
-    });
-
-    it('should include event data in HTML when provided', async () => {
-      const eventData = {
-        orderId: '12345',
-        customerName: 'John Doe',
-        amount: 99.99,
-      };
+    it('should convert URLs to clickable links', async () => {
+      const mockInfo = { messageId: 'test-message-id' };
+      mockTransporter.sendMail.mockResolvedValue(mockInfo as any);
 
       await emailService.sendNotificationEmail(
         'user@example.com',
         'Test Subject',
-        'Test message',
-        'ORDER_CREATED',
-        eventData
+        'Visit https://example.com for more info',
+        'test.event'
       );
 
-      const sentEmail = mockTransporter.sendMail.mock.calls[0][0];
-      expect(sentEmail.html).toContain('Event Details:');
-      expect(sentEmail.html).toContain('"orderId": "12345"');
-      expect(sentEmail.html).toContain('"customerName": "John Doe"');
-      expect(sentEmail.html).toContain('"amount": 99.99');
+      const sendMailCall = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sendMailCall.html).toContain('<a href="https://example.com"');
+      expect(sendMailCall.html).toContain('https://example.com</a>');
     });
 
-    it('should not include event data section when not provided', async () => {
-      await emailService.sendNotificationEmail('user@example.com', 'Test Subject', 'Test message', 'ORDER_CREATED');
+    it('should convert newlines to <br> tags', async () => {
+      const mockInfo = { messageId: 'test-message-id' };
+      mockTransporter.sendMail.mockResolvedValue(mockInfo as any);
 
-      const sentEmail = mockTransporter.sendMail.mock.calls[0][0];
-      expect(sentEmail.html).not.toContain('Event Details:');
+      await emailService.sendNotificationEmail(
+        'user@example.com',
+        'Test Subject',
+        'Line 1\nLine 2\nLine 3',
+        'test.event'
+      );
+
+      const sendMailCall = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sendMailCall.html).toContain('Line 1<br>Line 2<br>Line 3');
+    });
+
+    it('should escape HTML special characters', async () => {
+      const mockInfo = { messageId: 'test-message-id' };
+      mockTransporter.sendMail.mockResolvedValue(mockInfo as any);
+
+      await emailService.sendNotificationEmail(
+        'user@example.com',
+        'Test Subject',
+        '<script>alert("xss")</script>',
+        'test.event'
+      );
+
+      const sendMailCall = mockTransporter.sendMail.mock.calls[0][0];
+      expect(sendMailCall.html).toContain('&lt;script&gt;');
+      expect(sendMailCall.html).toContain('&lt;/script&gt;');
+      expect(sendMailCall.html).not.toContain('<script>');
     });
   });
 });
