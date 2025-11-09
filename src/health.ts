@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser';
 import { DaprServer } from '@dapr/dapr';
 import logger from './core/logger.js';
 import config from './core/config.js';
+import { daprClient } from './clients/index.js';
 import { EventTypes } from './events/index.js';
 
 const app = express();
@@ -170,14 +171,7 @@ export function startHealthServer(): void {
  * Initialize Dapr server for event subscriptions
  */
 export async function initializeDaprServer(): Promise<DaprServer> {
-  daprServer = new DaprServer({
-    serverHost: config.service.host,
-    serverPort: String(config.dapr.appPort),
-    clientOptions: {
-      daprHost: config.dapr.host,
-      daprPort: String(config.dapr.httpPort),
-    },
-  });
+  daprServer = daprClient.getServer();
 
   logger.info('Dapr server initialized', {
     daprHost: config.dapr.host,

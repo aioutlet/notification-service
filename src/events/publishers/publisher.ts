@@ -3,21 +3,16 @@
  * Publishes notification outcome events via Dapr pub/sub
  */
 
-import { DaprClient } from '@dapr/dapr';
+import { daprClient } from '../../clients/index.js';
 import logger from '../../core/logger.js';
 import config from '../../core/config.js';
 import { EventTypes } from '../event-types.js';
 
 export class DaprEventPublisher {
-  private daprClient: DaprClient;
   private readonly pubsubName: string;
   private readonly serviceName: string;
 
   constructor() {
-    this.daprClient = new DaprClient({
-      daprHost: config.dapr.host,
-      daprPort: String(config.dapr.httpPort),
-    });
     this.pubsubName = config.dapr.pubsubName;
     this.serviceName = config.service.name;
   }
@@ -49,7 +44,7 @@ export class DaprEventPublisher {
         notificationId: data.data?.notificationId,
       });
 
-      await this.daprClient.pubsub.publish(this.pubsubName, eventType, event);
+      await daprClient.publishEvent(this.pubsubName, eventType, event);
 
       logger.info(`Event published successfully: ${eventType}`, {
         operation: 'publish_event',

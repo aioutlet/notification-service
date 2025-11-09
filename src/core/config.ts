@@ -1,6 +1,9 @@
 /**
  * Configuration module for notification-service
- * Centralizes all environment-based configuration
+ * Centralizes all environment-based configuration (non-sensitive only)
+ *
+ * For sensitive secrets (SMTP credentials, message broker credentials), use:
+ * - import { getEmailConfig, getMessageBrokerConfig } from '../clients/index.js'
  */
 import dotenv from 'dotenv';
 

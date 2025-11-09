@@ -5,7 +5,7 @@
 
 import logger from './core/logger.js';
 import config from './core/config.js';
-import daprClient from './core/dapr.js';
+import { daprClient } from './clients/index.js';
 import { startHealthServer, initializeDaprServer } from './health.js';
 import { EventConsumerCoordinator } from './events/consumers/index.js';
 

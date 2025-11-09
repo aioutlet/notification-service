@@ -3,8 +3,8 @@
  * Provides utilities for Dapr service invocation, pub/sub, and server initialization
  */
 import { DaprClient, DaprServer, CommunicationProtocolEnum } from '@dapr/dapr';
-import config from './config';
-import logger from './logger';
+import config from '../core/config.js';
+import logger from '../core/logger.js';
 
 class DaprClientHelper {
   private client: DaprClient | null = null;
