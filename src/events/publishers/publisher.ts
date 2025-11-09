@@ -40,7 +40,7 @@ export class DaprEventPublisher {
       };
 
       const contextLogger = logger.withTraceContext(traceId, spanId);
-      
+
       contextLogger.info(`Publishing event: ${eventType}`, {
         operation: 'publish_event',
         eventType,

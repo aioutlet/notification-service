@@ -3,12 +3,14 @@
 This directory contains unit tests for individual components in isolation.
 
 ## Purpose
+
 - Test individual functions, classes, and methods
 - Mock all external dependencies (database, API calls, Dapr client, etc.)
 - Fast execution (< 100ms per test)
 - No network calls or external services
 
 ## Structure
+
 ```
 unit/
 ├── config/         # Configuration loading and validation tests
@@ -19,12 +21,14 @@ unit/
 ```
 
 ## Running Unit Tests
+
 ```bash
 npm run test:unit
 npm run test:unit -- --watch
 ```
 
 ## Guidelines
+
 - Mock all I/O operations
 - Test both success and error paths
 - Use descriptive test names

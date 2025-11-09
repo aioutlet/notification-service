@@ -144,7 +144,7 @@ class NotificationService {
     const eventData = cloudEvent.data || cloudEvent;
 
     const contextLogger = logger.withTraceContext(traceId, spanId);
-    
+
     contextLogger.info(`Received notification event: ${eventType}`, {
       operation: 'process_notification_event',
       eventType,

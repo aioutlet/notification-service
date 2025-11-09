@@ -3,12 +3,14 @@
 This directory contains end-to-end tests that verify complete user workflows.
 
 ## Purpose
+
 - Test complete notification flows from event to delivery
 - Verify cross-service integration
 - Test with real infrastructure (Dapr, message broker)
 - Validate observability and tracing
 
 ## Test Scenarios
+
 - User registration notification flow
 - Password reset notification flow
 - Order confirmation notification flow
@@ -17,11 +19,13 @@ This directory contains end-to-end tests that verify complete user workflows.
 - Dead letter queue scenarios
 
 ## Running E2E Tests
+
 ```bash
 npm run test:e2e
 ```
 
 ## Requirements
+
 - Running Dapr sidecar
 - Running message broker (RabbitMQ/Kafka)
 - Running dependent services (auth, user, order services)
@@ -29,6 +33,7 @@ npm run test:e2e
 - Zipkin/Jaeger for trace verification
 
 ## Guidelines
+
 - Test realistic user scenarios
 - Verify end-to-end trace propagation
 - Check notification delivery in test inbox

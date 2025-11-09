@@ -132,9 +132,9 @@ class Logger {
     return {
       debug: (message: string, metadata: Record<string, any> = {}) =>
         this.debug(message, { ...metadata, ...traceMetadata }),
-      info: (message: string, metadata: Record<string, any> = {}) => 
+      info: (message: string, metadata: Record<string, any> = {}) =>
         this.info(message, { ...metadata, ...traceMetadata }),
-      warn: (message: string, metadata: Record<string, any> = {}) => 
+      warn: (message: string, metadata: Record<string, any> = {}) =>
         this.warn(message, { ...metadata, ...traceMetadata }),
       error: (message: string, metadata: Record<string, any> = {}) =>
         this.error(message, { ...metadata, ...traceMetadata }),
