@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
-import config from '../config/index.js';
-import logger from '../observability/logging/index.js';
+import config from '../core/config.js';
+import logger from '../core/logger.js';
 
 export interface EmailOptions {
   to: string;

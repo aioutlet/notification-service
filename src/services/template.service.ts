@@ -5,7 +5,7 @@
  * Templates are defined in code for simplicity.
  */
 
-import logger from '../observability/logging/index.js';
+import logger from '../core/logger.js';
 
 export interface NotificationTemplate {
   event_type: string;

@@ -1,15 +1,42 @@
+/**
+ * Configuration module for notification-service
+ * Centralizes all environment-based configuration
+ */
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
 interface Config {
-  server: {
+  service: {
+    name: string;
+    version: string;
     port: number;
     host: string;
-    env: string;
-    serviceName: string;
-    serviceVersion: string;
+    nodeEnv: string;
+  };
+  cors: {
+    origins: string[];
+  };
+  logging: {
+    level: string;
+    format: string;
+    toConsole: boolean;
+    toFile: boolean;
+    filePath: string;
+  };
+  observability: {
+    enableTracing: boolean;
+    otlpEndpoint: string;
+    correlationIdHeader: string;
+  };
+  dapr: {
+    httpPort: number;
+    grpcPort: number;
+    appPort: number;
+    host: string;
+    pubsubName: string;
+    appId: string;
   };
   messageBroker: {
     type: 'rabbitmq' | 'kafka' | 'azure-servicebus';
@@ -66,13 +93,43 @@ interface Config {
 const brokerType = (process.env.MESSAGE_BROKER_TYPE || 'rabbitmq') as 'rabbitmq' | 'kafka' | 'azure-servicebus';
 
 const config: Config = {
-  server: {
-    port: parseInt(process.env.PORT || '3003'),
-    host: process.env.HOST || 'localhost',
-    env: process.env.NODE_ENV || 'development',
-    serviceName: process.env.NAME || 'notification-service',
-    serviceVersion: process.env.VERSION || '1.0.0',
+  service: {
+    name: process.env.NAME || 'notification-service',
+    version: process.env.VERSION || '1.0.0',
+    port: parseInt(process.env.PORT || '3003', 10),
+    host: process.env.HOST || '0.0.0.0',
+    nodeEnv: process.env.NODE_ENV || 'development',
   },
+
+  cors: {
+    origins: process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(',')
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3010'],
+  },
+
+  logging: {
+    level: process.env.LOG_LEVEL || 'debug',
+    format: process.env.LOG_FORMAT || 'console',
+    toConsole: process.env.LOG_TO_CONSOLE !== 'false',
+    toFile: process.env.LOG_TO_FILE === 'true',
+    filePath: process.env.LOG_FILE_PATH || './logs/notification-service.log',
+  },
+
+  observability: {
+    enableTracing: process.env.ENABLE_TRACING === 'true',
+    otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+    correlationIdHeader: process.env.CORRELATION_ID_HEADER || 'x-correlation-id',
+  },
+
+  dapr: {
+    httpPort: parseInt(process.env.DAPR_HTTP_PORT || '3503', 10),
+    grpcPort: parseInt(process.env.DAPR_GRPC_PORT || '50003', 10),
+    appPort: parseInt(process.env.PORT || '3003', 10),
+    host: process.env.DAPR_HOST || 'localhost',
+    pubsubName: process.env.DAPR_PUBSUB_NAME || 'notification-pubsub',
+    appId: process.env.DAPR_APP_ID || 'notification-service',
+  },
+
   messageBroker: {
     type: brokerType,
     ...(brokerType === 'rabbitmq' && {
@@ -112,11 +169,12 @@ const config: Config = {
       },
     }),
   },
+
   email: {
     provider: process.env.EMAIL_PROVIDER || 'smtp',
     smtp: {
       host: process.env.SMTP_HOST || 'localhost',
-      port: parseInt(process.env.SMTP_PORT || '1025'),
+      port: parseInt(process.env.SMTP_PORT || '1025', 10),
       secure: process.env.SMTP_SECURE === 'true',
       auth: {
         user: process.env.SMTP_USER || '',

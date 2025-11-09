@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Generic event-driven notification service",
   "type": "module",
-  "main": "dist/src/consumer.js",
+  "main": "dist/src/server.js",
   "scripts": {
-    "dev": "tsx watch src/consumer.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/src/consumer.js",
+    "start": "node dist/src/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -24,6 +24,7 @@
   "author": "AI Outlet Team",
   "license": "MIT",
   "dependencies": {
+    "@dapr/dapr": "^3.6.1",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.52.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.55.0",

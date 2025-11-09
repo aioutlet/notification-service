@@ -30,10 +30,10 @@ export enum EventTypes {
   PAYMENT_RECEIVED = 'payment.received',
   PAYMENT_FAILED = 'payment.failed',
 
-  // Profile events
-  PROFILE_PASSWORD_CHANGED = 'profile.password_changed',
-  PROFILE_NOTIFICATION_PREFERENCES_UPDATED = 'profile.notification_preferences_updated',
-  PROFILE_BANK_DETAILS_UPDATED = 'profile.bank_details_updated',
+  // User profile events
+  USER_PROFILE_PASSWORD_CHANGED = 'USER_PROFILE_PASSWORD_CHANGED',
+  USER_PROFILE_NOTIFICATION_PREFERENCES_UPDATED = 'USER_PROFILE_NOTIFICATION_PREFERENCES_UPDATED',
+  USER_PROFILE_BANK_DETAILS_UPDATED = 'USER_PROFILE_BANK_DETAILS_UPDATED',
 
   // Notification outcome events (published by notification-service for audit)
   NOTIFICATION_SENT = 'notification.sent',
@@ -93,11 +93,11 @@ export interface PaymentEvent extends BaseEvent {
   };
 }
 
-export interface ProfileEvent extends BaseEvent {
+export interface UserProfileEvent extends BaseEvent {
   eventType:
-    | EventTypes.PROFILE_PASSWORD_CHANGED
-    | EventTypes.PROFILE_NOTIFICATION_PREFERENCES_UPDATED
-    | EventTypes.PROFILE_BANK_DETAILS_UPDATED;
+    | EventTypes.USER_PROFILE_PASSWORD_CHANGED
+    | EventTypes.USER_PROFILE_NOTIFICATION_PREFERENCES_UPDATED
+    | EventTypes.USER_PROFILE_BANK_DETAILS_UPDATED;
   data: {
     field: string;
     oldValue?: any;
@@ -120,4 +120,4 @@ export interface NotificationOutcomeEvent extends BaseEvent {
 }
 
 // Union type for all events
-export type NotificationEvent = UserEvent | AuthEvent | OrderEvent | PaymentEvent | ProfileEvent;
+export type NotificationEvent = UserEvent | AuthEvent | OrderEvent | PaymentEvent | UserProfileEvent;
