@@ -1,4 +1,4 @@
-import logger from '../../../src/shared/observability/logging/index.js';
+import logger from '../../../../src/core/logger.js';
 
 // Extend global types for Jest
 declare const jest: any;
@@ -34,13 +34,12 @@ describe('Logger', () => {
 
     it('should log info message with additional arguments', () => {
       const message = 'Test info with args';
-      const req = { correlationId: 'test-123' };
-      const metadata = { operation: 'test' };
+      const metadata = { operation: 'test', traceId: 'test-123', spanId: 'span-456' };
 
-      logger.info(message, req, metadata);
+      logger.info(message, metadata);
 
       expect(loggerSpy.info).toHaveBeenCalledTimes(1);
-      expect(loggerSpy.info).toHaveBeenCalledWith(message, req, metadata);
+      expect(loggerSpy.info).toHaveBeenCalledWith(message, metadata);
     });
   });
 
@@ -140,8 +139,8 @@ describe('Logger', () => {
 
   describe('logger instance', () => {
     it('should be a singleton instance', () => {
-      const logger1 = require('../../../src/shared/observability/logging/index.js').default;
-      const logger2 = require('../../../src/shared/observability/logging/index.js').default;
+      const logger1 = require('../../../../src/core/logger.js').default;
+      const logger2 = require('../../../../src/core/logger.js').default;
 
       expect(logger1).toBe(logger2);
     });

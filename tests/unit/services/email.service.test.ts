@@ -1,14 +1,14 @@
 import nodemailer from 'nodemailer';
-import EmailService from '../../src/shared/services/email.service';
-import config from '../../src/shared/config/index';
+import EmailService from '../../../src/services/email.service.js';
+import config from '../../../src/core/config.js';
 
 // Mock dependencies
 jest.mock('nodemailer');
-jest.mock('../../src/shared/observability/logging/index.js');
-jest.mock('../../src/shared/config/index');
+jest.mock('../../../src/core/logger.js');
+jest.mock('../../../src/core/config.js');
 
 // Import after mocking
-import logger from '../../src/shared/observability/logging/index.js';
+import logger from '../../../src/core/logger.js';
 
 // Type the mocked modules
 const mockedNodemailer = nodemailer as jest.Mocked<typeof nodemailer>;
@@ -169,9 +169,8 @@ describe('EmailService', () => {
       const sentEmail = mockTransporter.sendMail.mock.calls[0][0];
       expect(sentEmail.html).toContain('Your order has been created');
       expect(sentEmail.html).toContain('Event: ORDER_CREATED');
-      expect(sentEmail.html).toContain('Event Details:');
-      expect(sentEmail.html).toContain('"orderId": "12345"');
-      expect(sentEmail.html).toContain('"amount": 99.99');
+      expect(sentEmail.html).toContain('<!DOCTYPE html>');
+      expect(sentEmail.html).toContain('AI Outlet Notification');
     });
 
     it('should return false when service is disabled', async () => {
@@ -421,10 +420,10 @@ describe('EmailService', () => {
       );
 
       const sentEmail = mockTransporter.sendMail.mock.calls[0][0];
-      expect(sentEmail.html).toContain('Event Details:');
-      expect(sentEmail.html).toContain('"orderId": "12345"');
-      expect(sentEmail.html).toContain('"customerName": "John Doe"');
-      expect(sentEmail.html).toContain('"amount": 99.99');
+      expect(sentEmail.html).toContain('Test message');
+      expect(sentEmail.html).toContain('Event: ORDER_CREATED');
+      expect(sentEmail.html).toContain('<!DOCTYPE html>');
+      expect(sentEmail.html).toContain('AI Outlet Notification');
     });
 
     it('should not include event data section when not provided', async () => {

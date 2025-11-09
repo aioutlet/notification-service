@@ -23,41 +23,43 @@ export class DaprEventPublisher {
   async publishEvent(
     eventType: EventTypes.NOTIFICATION_SENT | EventTypes.NOTIFICATION_FAILED,
     data: any,
-    correlationId: string
+    traceId: string,
+    spanId?: string
   ): Promise<boolean> {
     try {
       const event = {
         specversion: '1.0',
         type: eventType,
         source: this.serviceName,
-        id: data.data?.notificationId || correlationId,
+        id: data.data?.notificationId || traceId,
         time: new Date().toISOString(),
         datacontenttype: 'application/json',
         data: data,
-        correlationid: correlationId,
+        // W3C Trace Context
+        traceparent: spanId ? `00-${traceId}-${spanId}-01` : `00-${traceId}-${'0'.repeat(16)}-01`,
       };
 
-      logger.info(`Publishing event: ${eventType}`, {
+      const contextLogger = logger.withTraceContext(traceId, spanId);
+      
+      contextLogger.info(`Publishing event: ${eventType}`, {
         operation: 'publish_event',
-        correlationId,
         eventType,
         notificationId: data.data?.notificationId,
       });
 
       await daprClient.publishEvent(this.pubsubName, eventType, event);
 
-      logger.info(`Event published successfully: ${eventType}`, {
+      contextLogger.info(`Event published successfully: ${eventType}`, {
         operation: 'publish_event',
-        correlationId,
         eventType,
         businessEvent: 'EVENT_PUBLISHED',
       });
 
       return true;
     } catch (error) {
-      logger.error(`Failed to publish event: ${eventType}`, {
+      const contextLogger = logger.withTraceContext(traceId, spanId);
+      contextLogger.error(`Failed to publish event: ${eventType}`, {
         operation: 'publish_event',
-        correlationId,
         eventType,
         error: error instanceof Error ? error : new Error(String(error)),
       });
@@ -74,7 +76,8 @@ export class DaprEventPublisher {
     userId: string,
     recipientEmail: string,
     subject: string,
-    correlationId: string
+    traceId: string,
+    spanId?: string
   ): Promise<boolean> {
     return this.publishEvent(
       EventTypes.NOTIFICATION_SENT,
@@ -92,7 +95,8 @@ export class DaprEventPublisher {
           attemptNumber: 1,
         },
       },
-      correlationId
+      traceId,
+      spanId
     );
   }
 
@@ -106,7 +110,8 @@ export class DaprEventPublisher {
     recipientEmail: string | undefined,
     subject: string,
     errorMessage: string,
-    correlationId: string
+    traceId: string,
+    spanId?: string
   ): Promise<boolean> {
     return this.publishEvent(
       EventTypes.NOTIFICATION_FAILED,
@@ -125,7 +130,8 @@ export class DaprEventPublisher {
           attemptNumber: 1,
         },
       },
-      correlationId
+      traceId,
+      spanId
     );
   }
 }

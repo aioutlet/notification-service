@@ -136,13 +136,17 @@ class NotificationService {
    */
   async processNotificationEvent(cloudEvent: any, eventType: string): Promise<void> {
     const startTime = Date.now();
-    const correlationId = cloudEvent.correlationid || cloudEvent.id || uuidv4();
+    // Extract W3C Trace Context from CloudEvent
+    const traceparent = cloudEvent.traceparent || cloudEvent.headers?.traceparent;
+    const traceId = traceparent ? traceparent.split('-')[1] : cloudEvent.id || uuidv4();
+    const spanId = traceparent ? traceparent.split('-')[2] : undefined;
     const notificationId = uuidv4();
     const eventData = cloudEvent.data || cloudEvent;
 
-    logger.info(`Received notification event: ${eventType}`, {
+    const contextLogger = logger.withTraceContext(traceId, spanId);
+    
+    contextLogger.info(`Received notification event: ${eventType}`, {
       operation: 'process_notification_event',
-      correlationId,
       eventType,
       userId: eventData.userId || eventData.email,
       notificationId,
@@ -161,18 +165,15 @@ class NotificationService {
 
       // Validate event structure
       if (!eventData.eventType) {
-        logger.warn('Invalid event structure, missing eventType', {
-          correlationId,
-        });
+        contextLogger.warn('Invalid event structure, missing eventType');
         return;
       }
 
       // Render notification content from template
       const renderedNotification = await this.renderNotification(eventData, 'email');
 
-      logger.info('Processing notification', {
+      contextLogger.info('Processing notification', {
         operation: 'send_notification',
-        correlationId,
         businessEvent: 'NOTIFICATION_PROCESSING',
         notificationId,
         userId: eventData.userId,
@@ -200,12 +201,12 @@ class NotificationService {
             eventData.userId,
             recipientEmail,
             renderedNotification.subject || 'Notification',
-            correlationId
+            traceId,
+            spanId
           );
 
-          logger.info('Email notification sent successfully', {
+          contextLogger.info('Email notification sent successfully', {
             operation: 'send_email',
-            correlationId,
             businessEvent: 'NOTIFICATION_SENT',
             notificationId,
             email: recipientEmail,
@@ -221,12 +222,12 @@ class NotificationService {
             recipientEmail,
             renderedNotification.subject || 'Notification',
             'Email sending failed',
-            correlationId
+            traceId,
+            spanId
           );
 
-          logger.error('Failed to send email notification', {
+          contextLogger.error('Failed to send email notification', {
             operation: 'send_email',
-            correlationId,
             businessEvent: 'NOTIFICATION_FAILED',
             notificationId,
             error: new Error('Email sending failed'),
@@ -242,20 +243,20 @@ class NotificationService {
           recipientEmail,
           renderedNotification.subject || 'Notification',
           'No email address or email service disabled',
-          correlationId
+          traceId,
+          spanId
         );
 
-        logger.warn('Email notification skipped', {
-          correlationId,
+        contextLogger.warn('Email notification skipped', {
           notificationId,
           hasEmail: !!recipientEmail,
           emailEnabled: this.emailService.isEnabled(),
         });
       }
     } catch (error) {
-      logger.error('Failed to process notification event', {
+      const contextLogger = logger.withTraceContext(traceId, spanId);
+      contextLogger.error('Failed to process notification event', {
         operation: 'process_notification_event',
-        correlationId,
         eventType,
         notificationId,
         error: error instanceof Error ? error : new Error(String(error)),
