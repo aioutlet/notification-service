@@ -5,9 +5,9 @@
   "type": "module",
   "main": "dist/src/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "start": "dapr run --app-id notification-service --app-port 1011 --dapr-http-port 3511 --dapr-grpc-port 50011 --log-level warn --config ./.dapr/config.yaml --resources-path ./.dapr/components -- node dist/src/server.js",
+    "dev": "npx tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/src/server.js",
     "test": "jest",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
