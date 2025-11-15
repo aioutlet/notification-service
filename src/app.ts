@@ -4,10 +4,6 @@
  */
 
 import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import cookieParser from 'cookie-parser';
 import logger from './core/logger.js';
 import config from './core/config.js';
 import { daprClient } from './clients/index.js';
@@ -19,14 +15,9 @@ import { EventConsumerCoordinator } from './events/consumers/index.js';
 const app = express();
 let eventConsumer: EventConsumerCoordinator;
 let isShuttingDown = false;
-const isDaprEnabled = daprClient.isDaprEnabled();
 
 // Middleware
-app.use(helmet());
-app.use(compression());
-app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
 app.use(traceContextMiddleware as express.RequestHandler); // W3C Trace Context
 
 // Register routes
@@ -59,13 +50,7 @@ export const startConsumer = async (): Promise<void> => {
       service: config.service.name,
       version: config.service.version,
       environment: config.service.nodeEnv,
-      daprEnabled: isDaprEnabled,
     });
-
-    if (!isDaprEnabled) {
-      logger.error('Dapr is disabled - notification service requires Dapr to run');
-      process.exit(1);
-    }
 
     // Start HTTP server (required for Dapr subscriptions and health checks)
     const PORT = config.service.port;

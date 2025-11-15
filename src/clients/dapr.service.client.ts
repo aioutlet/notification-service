@@ -6,20 +6,11 @@ import { DaprClient, DaprServer, CommunicationProtocolEnum } from '@dapr/dapr';
 import config from '../core/config.js';
 import logger from '../core/logger.js';
 
-class DaprClientHelper {
+class DaprServiceClient {
   private client: DaprClient | null = null;
   private server: DaprServer | null = null;
-  private daprEnabled: boolean;
-
-  constructor() {
-    this.daprEnabled = (process.env.DAPR_ENABLED || 'true').toLowerCase() === 'true';
-  }
 
   getClient(): DaprClient {
-    if (!this.daprEnabled) {
-      throw new Error('Dapr is disabled. Set DAPR_ENABLED=true to use Dapr features.');
-    }
-
     if (!this.client) {
       this.client = new DaprClient({
         daprHost: config.dapr.host,
@@ -35,10 +26,6 @@ class DaprClientHelper {
   }
 
   getServer(): DaprServer {
-    if (!this.daprEnabled) {
-      throw new Error('Dapr is disabled. Set DAPR_ENABLED=true to use Dapr features.');
-    }
-
     if (!this.server) {
       this.server = new DaprServer({
         serverHost: config.service.host,
@@ -55,10 +42,6 @@ class DaprClientHelper {
       });
     }
     return this.server;
-  }
-
-  isDaprEnabled(): boolean {
-    return this.daprEnabled;
   }
 
   /**
@@ -119,5 +102,5 @@ class DaprClientHelper {
 }
 
 // Export singleton instance
-export const daprClient = new DaprClientHelper();
+export const daprClient = new DaprServiceClient();
 export default daprClient;
