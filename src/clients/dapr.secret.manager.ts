@@ -1,7 +1,6 @@
 /**
  * Dapr Secret Management Service
  * Provides secret management using Dapr's secret store building block.
- * Falls back to environment variables if Dapr is not available.
  *
  * NOTE: Environment variables are loaded in server.ts before this module is imported
  */
@@ -11,14 +10,13 @@ import logger from '../core/logger.js';
 import config from '../core/config.js';
 
 class DaprSecretManager {
-  private daprEnabled: boolean;
   private environment: string;
   private daprHost: string;
   private daprPort: string;
   private secretStoreName: string;
+  private client: DaprClient;
 
   constructor() {
-    this.daprEnabled = (process.env.DAPR_ENABLED || 'true').toLowerCase() === 'true';
     this.environment = config.service.nodeEnv;
     this.daprHost = process.env.DAPR_HOST || '127.0.0.1';
     this.daprPort = process.env.DAPR_HTTP_PORT || '3503';
@@ -30,45 +28,27 @@ class DaprSecretManager {
       this.secretStoreName = 'local-secret-store';
     }
 
+    this.client = new DaprClient({
+      daprHost: this.daprHost,
+      daprPort: this.daprPort,
+    });
+
     logger.info('Secret manager initialized', {
       event: 'secret_manager_init',
-      daprEnabled: this.daprEnabled,
+      daprEnabled: true,
       environment: this.environment,
       secretStore: this.secretStoreName,
     });
   }
 
   /**
-   * Get a secret value
+   * Get a secret value from Dapr secret store
    * @param secretName - Name of the secret to retrieve
-   * @returns Secret value or null if not found
-   *
-   * Priority:
-   * 1. Dapr secret store (if enabled and available)
-   * 2. Environment variable (fallback)
+   * @returns Secret value
    */
-  async getSecret(secretName: string): Promise<string | null> {
-    // If Dapr is disabled, use environment variables
-    if (!this.daprEnabled) {
-      const value = process.env[secretName];
-      if (value) {
-        logger.debug('Retrieved secret from environment', {
-          event: 'secret_retrieved',
-          secretName,
-          source: 'env',
-        });
-      }
-      return value || null;
-    }
-
-    // Try Dapr secret store
+  async getSecret(secretName: string): Promise<string> {
     try {
-      const client = new DaprClient({
-        daprHost: this.daprHost,
-        daprPort: this.daprPort,
-      });
-
-      const response = await client.secret.get(this.secretStoreName, secretName);
+      const response = await this.client.secret.get(this.secretStoreName, secretName);
 
       // Handle different response types
       if (response && typeof response === 'object') {
@@ -97,31 +77,16 @@ class DaprSecretManager {
         }
       }
 
-      // If we get here, no value was found in Dapr
-      logger.warn('Secret not found in Dapr store', {
-        event: 'secret_not_found',
-        secretName,
-        store: this.secretStoreName,
-      });
+      throw new Error(`Secret '${secretName}' not found in Dapr store`);
     } catch (error) {
-      logger.warn(`Failed to get secret from Dapr: ${(error as Error).message}`, {
+      logger.error(`Failed to get secret from Dapr: ${(error as Error).message}`, {
         event: 'secret_retrieval_error',
         secretName,
         error: (error as Error).message,
         store: this.secretStoreName,
       });
+      throw error;
     }
-
-    // Fallback to environment variable
-    const value = process.env[secretName];
-    if (value) {
-      logger.debug('Retrieved secret from environment (fallback)', {
-        event: 'secret_retrieved',
-        secretName,
-        source: 'env_fallback',
-      });
-    }
-    return value || null;
   }
 
   /**
@@ -129,8 +94,8 @@ class DaprSecretManager {
    * @param secretNames - List of secret names to retrieve
    * @returns Object mapping secret names to their values
    */
-  async getMultipleSecrets(secretNames: string[]): Promise<Record<string, string | null>> {
-    const secrets: Record<string, string | null> = {};
+  async getMultipleSecrets(secretNames: string[]): Promise<Record<string, string>> {
+    const secrets: Record<string, string> = {};
     for (const name of secretNames) {
       secrets[name] = await this.getSecret(name);
     }
@@ -138,7 +103,7 @@ class DaprSecretManager {
   }
 
   /**
-   * Get email configuration from secrets or environment variables
+   * Get email configuration from Dapr secrets
    * @returns Email configuration parameters
    */
   async getEmailConfig(): Promise<{
@@ -156,17 +121,21 @@ class DaprSecretManager {
       this.getSecret('SMTP_PASS'),
     ]);
 
+    if (!host || !port || !user || !pass) {
+      throw new Error('Missing required SMTP secrets from Dapr');
+    }
+
     return {
-      smtpHost: host || 'localhost',
-      smtpPort: parseInt(port || '1025', 10),
+      smtpHost: host,
+      smtpPort: parseInt(port, 10),
       smtpSecure: secure === 'true',
-      smtpUser: user || '',
-      smtpPass: pass || '',
+      smtpUser: user,
+      smtpPass: pass,
     };
   }
 
   /**
-   * Get message broker configuration from secrets or environment variables
+   * Get message broker configuration from Dapr secrets
    * @returns Message broker configuration parameters
    */
   async getMessageBrokerConfig(): Promise<{
@@ -178,8 +147,12 @@ class DaprSecretManager {
       this.getSecret('AZURE_SERVICEBUS_CONNECTION_STRING'),
     ]);
 
+    if (!rabbitmqUrl) {
+      throw new Error('RABBITMQ_URL not found in Dapr secret store');
+    }
+
     return {
-      rabbitmqUrl: rabbitmqUrl || 'amqp://guest:guest@localhost:5672',
+      rabbitmqUrl,
       azureServiceBusConnectionString: azureConnectionString || '',
     };
   }
