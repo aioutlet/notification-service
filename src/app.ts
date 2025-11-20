@@ -6,14 +6,11 @@
 import express from 'express';
 import logger from './core/logger.js';
 import config from './core/config.js';
-import { daprClient } from './clients/index.js';
 import { traceContextMiddleware } from './middlewares/traceContext.middleware.js';
 import operationalRoutes from './routes/operational.routes.js';
-import daprRoutes from './routes/dapr.routes.js';
-import { EventConsumerCoordinator } from './events/consumers/index.js';
+import eventsRoutes from './routes/events.routes.js';
 
 const app = express();
-let eventConsumer: EventConsumerCoordinator;
 let isShuttingDown = false;
 
 // Middleware
@@ -22,7 +19,7 @@ app.use(traceContextMiddleware as express.RequestHandler); // W3C Trace Context
 
 // Register routes
 app.use(operationalRoutes); // Health, readiness, liveness, metrics
-app.use(daprRoutes); // Dapr subscription
+app.use(eventsRoutes); // Event handling routes
 
 // 404 handler
 app.use((req, res) => {
@@ -68,21 +65,7 @@ export const startConsumer = async (): Promise<void> => {
       });
     });
 
-    // Initialize Dapr for event-driven communication
-    logger.info('Initializing Dapr server');
-    const daprServer = daprClient.getServer();
-
-    logger.info('Dapr server initialized', {
-      daprHost: config.dapr.host,
-      daprPort: config.dapr.httpPort,
-      appPort: config.service.port,
-    });
-
-    eventConsumer = new EventConsumerCoordinator(daprServer);
-    await eventConsumer.registerSubscriptions();
-
-    await daprServer.start();
-    logger.info('Consumer ready - processing events via Dapr pub/sub');
+    logger.info('Consumer ready - processing events via Dapr declarative subscriptions');
   } catch (error) {
     logger.error('Failed to start notification consumer', { error });
     process.exit(1);

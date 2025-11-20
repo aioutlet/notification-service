@@ -1,14 +1,13 @@
 /**
- * Dapr Client and Server Helper
- * Provides utilities for Dapr service invocation, pub/sub, and server initialization
+ * Dapr Client Helper
+ * Provides utilities for Dapr service invocation and pub/sub
  */
-import { DaprClient, DaprServer, CommunicationProtocolEnum } from '@dapr/dapr';
+import { DaprClient, CommunicationProtocolEnum } from '@dapr/dapr';
 import config from '../core/config.js';
 import logger from '../core/logger.js';
 
 class DaprServiceClient {
   private client: DaprClient | null = null;
-  private server: DaprServer | null = null;
 
   getClient(): DaprClient {
     if (!this.client) {
@@ -23,25 +22,6 @@ class DaprServiceClient {
       });
     }
     return this.client;
-  }
-
-  getServer(): DaprServer {
-    if (!this.server) {
-      this.server = new DaprServer({
-        serverHost: config.service.host,
-        serverPort: String(config.dapr.appPort),
-        clientOptions: {
-          daprHost: config.dapr.host,
-          daprPort: String(config.dapr.httpPort),
-        },
-      });
-      logger.info('Dapr server initialized', {
-        appPort: config.dapr.appPort,
-        daprHost: config.dapr.host,
-        daprPort: config.dapr.httpPort,
-      });
-    }
-    return this.server;
   }
 
   /**

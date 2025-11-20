@@ -31,9 +31,9 @@ export enum EventTypes {
   PAYMENT_FAILED = 'payment.failed',
 
   // User profile events
-  USER_PROFILE_PASSWORD_CHANGED = 'USER_PROFILE_PASSWORD_CHANGED',
-  USER_PROFILE_NOTIFICATION_PREFERENCES_UPDATED = 'USER_PROFILE_NOTIFICATION_PREFERENCES_UPDATED',
-  USER_PROFILE_BANK_DETAILS_UPDATED = 'USER_PROFILE_BANK_DETAILS_UPDATED',
+  USER_PROFILE_PASSWORD_CHANGED = 'profile.password_changed',
+  USER_PROFILE_NOTIFICATION_PREFERENCES_UPDATED = 'profile.notification_preferences_updated',
+  USER_PROFILE_BANK_DETAILS_UPDATED = 'profile.bank_details_updated',
 
   // Notification outcome events (published by notification-service for audit)
   NOTIFICATION_SENT = 'notification.sent',
