@@ -21,12 +21,7 @@ class DaprSecretManager {
     this.daprHost = process.env.DAPR_HOST || '127.0.0.1';
     this.daprPort = process.env.DAPR_HTTP_PORT || '3503';
 
-    // Use appropriate secret store based on environment
-    if (this.environment === 'production') {
-      this.secretStoreName = 'azure-keyvault-secret-store';
-    } else {
-      this.secretStoreName = 'local-secret-store';
-    }
+    this.secretStoreName = 'secret-store';
 
     this.client = new DaprClient({
       daprHost: this.daprHost,
@@ -90,19 +85,7 @@ class DaprSecretManager {
   }
 
   /**
-   * Get multiple secrets at once
-   * @param secretNames - List of secret names to retrieve
-   * @returns Object mapping secret names to their values
-   */
-  async getMultipleSecrets(secretNames: string[]): Promise<Record<string, string>> {
-    const secrets: Record<string, string> = {};
-    for (const name of secretNames) {
-      secrets[name] = await this.getSecret(name);
-    }
-    return secrets;
-  }
 
-  /**
    * Get email configuration from Dapr secrets
    * @returns Email configuration parameters
    */

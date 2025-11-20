@@ -2,6 +2,8 @@
 # Run Notification Service with Dapr sidecar
 # Usage: .\run.ps1
 
+$Host.UI.RawUI.WindowTitle = "Notification Service"
+
 Write-Host "Starting Notification Service with Dapr..." -ForegroundColor Green
 Write-Host "Service will be available at: http://localhost:1011" -ForegroundColor Cyan
 Write-Host "Dapr HTTP endpoint: http://localhost:3511" -ForegroundColor Cyan

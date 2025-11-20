@@ -3,6 +3,8 @@ kind: Configuration
 metadata:
   name: notification-service-config
 spec:
+  scheduler:
+    enabled: false
   tracing:
     samplingRate: '1'
     otel:
