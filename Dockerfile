@@ -8,8 +8,8 @@
 FROM node:24-alpine AS base
 WORKDIR /app
 
-# Install dumb-init for proper signal handling, curl for health checks, and git for npm
-RUN apk add --no-cache dumb-init curl git
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -28,6 +28,7 @@ RUN npm ci --include=dev && npm cache clean --force
 FROM dependencies AS development
 
 # Copy application code
+# Note: In development, mount code as volume: docker run -v ./:/app
 COPY --chown=notificationuser:nodejs . .
 
 # Create logs directory
@@ -39,9 +40,9 @@ USER notificationuser
 # Expose port
 EXPOSE 3003
 
-# Health check
+# Health check (using Node.js to avoid curl dependency)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:3003/health || exit 1
+    CMD node -e "require('http').get('http://localhost:3003/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # Use dumb-init and start development server
 ENTRYPOINT ["dumb-init", "--"]
@@ -84,15 +85,18 @@ USER notificationuser
 # Expose port
 EXPOSE 3003
 
-# Health check
+# Health check (using Node.js to avoid curl dependency)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:3003/health || exit 1
+    CMD node -e "require('http').get('http://localhost:3003/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/server.js"]
 
-# Labels for better image management
+# Labels for better image management and security scanning
 LABEL maintainer="AIOutlet Team"
 LABEL service="notification-service"
 LABEL version="1.0.0"
+LABEL org.opencontainers.image.source="https://github.com/aioutlet/aioutlet"
+LABEL org.opencontainers.image.description="Notification Service for AIOutlet platform"
+LABEL org.opencontainers.image.vendor="AIOutlet"
