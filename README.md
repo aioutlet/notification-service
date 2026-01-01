@@ -1,48 +1,94 @@
-# Notification Service
+# 📧 Notification Service
 
-A simple, stateless notification service that consumes events from a message broker and sends notifications via various channels (email, SMS, etc.).
+Stateless notification microservice for xShop.ai - consumes events from message broker and sends notifications via email, SMS, and push channels.
 
-## Architecture
-
-**Simple Consumer Pattern:**
-
-```
-Message Broker → Notification Service → Email/SMS/Push
-                         ↓
-                 Publish Outcome Events → Audit Service
-```
-
-**Key Principles:**
-
-- **Stateless**: No database, no state management
-- **Event-Driven**: Consumes events, sends notifications, publishes outcomes
-- **Simple**: Just a consumer - no API layer needed
-- **Scalable**: Horizontally scalable by adding more consumer instances
-
-## Features
-
-- ✅ Consumes notification events from RabbitMQ
-- ✅ In-memory template rendering (9 default templates)
-- ✅ Email notifications via SMTP
-- ✅ Publishes notification outcomes (NOTIFICATION_SENT/FAILED) for audit trail
-- ✅ Correlation ID tracking for distributed tracing
-- ✅ Graceful shutdown handling
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- RabbitMQ running
-- SMTP server access (for email notifications)
+- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **RabbitMQ** ([Install Guide](https://www.rabbitmq.com/download.html))
+- **SMTP Server** (Gmail, SendGrid, or custom)
+- **Dapr CLI** 1.16+ ([Install Guide](https://docs.dapr.io/getting-started/install-dapr-cli/))
+
+### Setup
+
+**1. Clone & Install**
+```bash
+git clone https://github.com/xshopai/notification-service.git
+cd notification-service
+npm install
+```
+
+**2. Configure Environment**
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env - update these values:
+# SMTP_HOST=smtp.gmail.com
+# SMTP_USER=your-email@gmail.com
+# SMTP_PASS=your-app-password
+# RABBITMQ_URL=amqp://guest:guest@localhost:5672
+```
+
+**3. Run Service**
+```bash
+# Start with Dapr (recommended)
+npm run dev
+
+# Or use platform-specific scripts
+./run.sh       # Linux/Mac
+.\run.ps1      # Windows
+```
+
+**4. Verify**
+```bash
+# Check health
+curl http://localhost:1006/health
+
+# Should return: {"status":"UP","service":"notification-service"...}
+```
+
+### Common Commands
+
+```bash
+# Run tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Lint code
+npm run lint
+
+# Build for production
+npm run build
+
+# Production mode
+npm start
+```
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [📖 Developer Guide](docs/DEVELOPER_GUIDE.md) | Local setup, debugging, daily workflows |
+| [📘 Technical Reference](docs/TECHNICAL.md) | Architecture, security, monitoring |
+| [🤝 Contributing](docs/CONTRIBUTING.md) | Contribution guidelines and workflow |
+
+## ⚙️ Configuration
+
+### Required Environment Variables
 
 ### Environment Variables
 
 ```bash
 # Service
-NODE_ENV=development
+NODE_ENV=development              # Environment: development, production, test
 NAME=notification-service
 VERSION=1.0.0
+PORT=1006                         # HTTP server port
 
 # Message Broker
 MESSAGE_BROKER_TYPE=rabbitmq
@@ -61,9 +107,37 @@ EMAIL_FROM_NAME=AI Outlet Notifications
 EMAIL_FROM_ADDRESS=noreply@aioutlet.com
 EMAIL_ENABLED=true
 
-# JWT (for future admin endpoints if needed)
-JWT_SECRET=your-secret-key
+# Dapr
+DAPR_HTTP_PORT=3506              # Dapr sidecar HTTP port
+DAPR_GRPC_PORT=50006             # Dapr sidecar gRPC port
 ```
+
+See [.env.example](.env.example) for complete configuration options.
+
+## ✨ Key Features
+
+- Stateless event-driven architecture (no database)
+- In-memory template rendering (9 default templates)
+- Email notifications via SMTP
+- Publishes notification outcomes for audit trail
+- Correlation ID tracking for distributed tracing
+- Graceful shutdown handling
+- Horizontally scalable (add more consumer instances)
+
+## 🏗️ Architecture
+
+**Simple Consumer Pattern:**
+```
+Message Broker → Notification Service → Email/SMS/Push
+                         ↓
+                 Publish Outcome Events → Audit Service
+```
+
+**Key Principles:**
+- **Stateless**: No database, no state management
+- **Event-Driven**: Consumes events, sends notifications, publishes outcomes
+- **Simple**: Just a consumer - no API layer needed
+- **Scalable**: Horizontally scalable by adding more consumer instances
 
 ### Installation
 
