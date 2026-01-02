@@ -94,9 +94,9 @@ ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/server.js"]
 
 # Labels for better image management and security scanning
-LABEL maintainer="AIOutlet Team"
+LABEL maintainer="xShop.ai Team"
 LABEL service="notification-service"
 LABEL version="1.0.0"
 LABEL org.opencontainers.image.source="https://github.com/aioutlet/aioutlet"
-LABEL org.opencontainers.image.description="Notification Service for AIOutlet platform"
-LABEL org.opencontainers.image.vendor="AIOutlet"
+LABEL org.opencontainers.image.description="Notification Service for xShop.ai platform"
+LABEL org.opencontainers.image.vendor="xShop.ai"

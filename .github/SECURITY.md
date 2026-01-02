@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Notification Service is an event-driven microservice responsible for handling all notification delivery across the AIOutlet platform, including email, SMS, push notifications, and in-app messaging. It processes sensitive user communication data and personal preferences.
+The Notification Service is an event-driven microservice responsible for handling all notification delivery across the xShop.ai platform, including email, SMS, push notifications, and in-app messaging. It processes sensitive user communication data and personal preferences.
 
 ## Supported Versions
 
