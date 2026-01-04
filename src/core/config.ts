@@ -136,7 +136,7 @@ const config: Config = {
     ...(brokerType === 'rabbitmq' && {
       rabbitmq: {
         url: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
-        exchange: process.env.RABBITMQ_EXCHANGE || 'aioutlet.events',
+        exchange: process.env.RABBITMQ_EXCHANGE || 'xshopai.events',
         queues: {
           notifications: process.env.RABBITMQ_QUEUE_NOTIFICATIONS || 'notifications',
           email: process.env.RABBITMQ_QUEUE_EMAIL || 'notifications.email',
@@ -184,7 +184,7 @@ const config: Config = {
     },
     from: {
       name: process.env.EMAIL_FROM_NAME || 'AI Outlet Notifications',
-      address: process.env.EMAIL_FROM_ADDRESS || 'noreply@aioutlet.local',
+      address: process.env.EMAIL_FROM_ADDRESS || 'noreply@xshopai.local',
     },
     enabled: process.env.EMAIL_ENABLED !== 'false',
   },

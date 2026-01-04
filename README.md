@@ -1,6 +1,6 @@
 # 📧 Notification Service
 
-Stateless notification microservice for xShop.ai - consumes events from message broker and sends notifications via email, SMS, and push channels.
+Stateless notification microservice for xshop.ai - consumes events from message broker and sends notifications via email, SMS, and push channels.
 
 ## 🚀 Quick Start
 
@@ -93,7 +93,7 @@ PORT=1006                         # HTTP server port
 # Message Broker
 MESSAGE_BROKER_TYPE=rabbitmq
 RABBITMQ_URL=amqp://guest:guest@localhost:5672
-RABBITMQ_EXCHANGE=aioutlet.events
+RABBITMQ_EXCHANGE=xshopai.events
 RABBITMQ_QUEUE_NOTIFICATIONS=notification-service.queue
 
 # Email
@@ -104,7 +104,7 @@ SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 EMAIL_FROM_NAME=AI Outlet Notifications
-EMAIL_FROM_ADDRESS=noreply@aioutlet.com
+EMAIL_FROM_ADDRESS=noreply@xshopai.com
 EMAIL_ENABLED=true
 
 # Dapr

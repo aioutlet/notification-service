@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Notification Service is an event-driven microservice responsible for handling all notification delivery across the xShop.ai platform, including email, SMS, push notifications, and in-app messaging. It processes sensitive user communication data and personal preferences.
+The Notification Service is an event-driven microservice responsible for handling all notification delivery across the xshop.ai platform, including email, SMS, push notifications, and in-app messaging. It processes sensitive user communication data and personal preferences.
 
 ## Supported Versions
 
@@ -187,7 +187,7 @@ Notification service vulnerabilities can affect user privacy and platform trust:
 
 1. **Do NOT** open a public issue
 2. **Do NOT** send test notifications to real users
-3. **Email** our security team at: <security@aioutlet.com>
+3. **Email** our security team at: <security@xshopai.com>
 
 ### Critical Security Areas
 
@@ -358,9 +358,9 @@ The Notification Service adheres to:
 
 For security-related questions or concerns:
 
-- **Email**: <security@aioutlet.com>
+- **Email**: <security@xshopai.com>
 - **Emergency**: Include "URGENT NOTIFICATION SECURITY" in subject line
-- **Privacy Issues**: Copy <privacy@aioutlet.com>
+- **Privacy Issues**: Copy <privacy@xshopai.com>
 
 ---
 

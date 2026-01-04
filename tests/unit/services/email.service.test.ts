@@ -46,7 +46,7 @@ describe('EmailService', () => {
       },
       from: {
         name: 'AI Outlet',
-        address: 'noreply@aioutlet.com',
+        address: 'noreply@xshopai.com',
       },
     };
   });
@@ -119,7 +119,7 @@ describe('EmailService', () => {
 
       expect(result).toBe(true);
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: '"AI Outlet" <noreply@aioutlet.com>',
+        from: '"AI Outlet" <noreply@xshopai.com>',
         to: 'user@example.com',
         subject: 'Test Subject',
         text: 'Test message content',

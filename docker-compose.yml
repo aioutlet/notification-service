@@ -19,9 +19,9 @@ services:
       - SMTP_PORT=1025
       - SMTP_USER=
       - SMTP_PASSWORD=
-      - EMAIL_FROM=noreply@aioutlet.com
+      - EMAIL_FROM=noreply@xshopai.com
     networks:
-      - aioutlet-network
+      - xshopai-network
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:1009/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
       interval: 30s
@@ -30,5 +30,5 @@ services:
       start_period: 40s
 
 networks:
-  aioutlet-network:
+  xshopai-network:
     external: true

@@ -51,7 +51,7 @@ describe('Config', () => {
 
       expect(config.rabbitmq).toEqual({
         url: 'amqp://guest:guest@localhost:5672',
-        exchange: 'aioutlet.events',
+        exchange: 'xshopai.events',
         exchanges: {
           order: 'order.events',
           user: 'user.events',
@@ -74,7 +74,7 @@ describe('Config', () => {
         },
         from: {
           name: 'AI Outlet Notifications',
-          address: 'noreply@aioutlet.com',
+          address: 'noreply@xshopai.com',
         },
         enabled: true,
       });
@@ -158,7 +158,7 @@ describe('Config', () => {
 
       expect(config.rabbitmq).toEqual({
         url: 'amqp://user:pass@rabbitmq.example.com:5672',
-        exchange: 'aioutlet.events',
+        exchange: 'xshopai.events',
         exchanges: {
           order: 'prod.order.events',
           user: 'prod.user.events',
