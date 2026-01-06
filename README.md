@@ -1,6 +1,6 @@
 # 📧 Notification Service
 
-Stateless notification microservice for xshop.ai - consumes events from message broker and sends notifications via email, SMS, and push channels.
+Stateless notification microservice for xshopai - consumes events from message broker and sends notifications via email, SMS, and push channels.
 
 ## 🚀 Quick Start
 
