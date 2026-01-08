@@ -73,7 +73,7 @@ describe('Config', () => {
           },
         },
         from: {
-          name: 'AI Outlet Notifications',
+          name: 'xshopai Notifications',
           address: 'noreply@xshopai.com',
         },
         enabled: true,

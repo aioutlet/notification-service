@@ -32,9 +32,9 @@ const DEFAULT_TEMPLATES: NotificationTemplate[] = [
     event_type: 'auth.user.registered',
     channel: 'email',
     template_name: 'User Registration',
-    subject: 'Welcome to AI Outlet!',
+    subject: 'Welcome to xshopai!',
     message_template:
-      'Hello {{name}},\n\nWelcome to AI Outlet! Your account has been successfully created.\n\nYou will receive a separate email to verify your email address.\n\nThank you for joining us!',
+      'Hello {{name}},\n\nWelcome to xshopai! Your account has been successfully created.\n\nYou will receive a separate email to verify your email address.\n\nThank you for joining us!',
     is_active: true,
   },
   {
@@ -43,7 +43,7 @@ const DEFAULT_TEMPLATES: NotificationTemplate[] = [
     template_name: 'Email Verification',
     subject: 'Verify your email address',
     message_template:
-      'Hello {{username}},\n\nWelcome to AI Outlet! Please verify your email address by clicking the link below:\n\n{{verificationUrl}}\n\nThis link will expire in 24 hours.\n\nIf you did not create an account, please ignore this email.\n\nThank you!',
+      'Hello {{username}},\n\nWelcome to xshopai! Please verify your email address by clicking the link below:\n\n{{verificationUrl}}\n\nThis link will expire in 24 hours.\n\nIf you did not create an account, please ignore this email.\n\nThank you!',
     is_active: true,
   },
   {

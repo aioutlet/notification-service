@@ -45,7 +45,7 @@ describe('EmailService', () => {
         },
       },
       from: {
-        name: 'AI Outlet',
+        name: 'xshopai',
         address: 'noreply@xshopai.com',
       },
     };
@@ -119,7 +119,7 @@ describe('EmailService', () => {
 
       expect(result).toBe(true);
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: '"AI Outlet" <noreply@xshopai.com>',
+        from: '"xshopai" <noreply@xshopai.com>',
         to: 'user@example.com',
         subject: 'Test Subject',
         text: 'Test message content',
@@ -170,7 +170,7 @@ describe('EmailService', () => {
       expect(sentEmail.html).toContain('Your order has been created');
       expect(sentEmail.html).toContain('Event: ORDER_CREATED');
       expect(sentEmail.html).toContain('<!DOCTYPE html>');
-      expect(sentEmail.html).toContain('AI Outlet Notification');
+      expect(sentEmail.html).toContain('xshopai Notification');
     });
 
     it('should return false when service is disabled', async () => {
@@ -394,7 +394,7 @@ describe('EmailService', () => {
       expect(html).toContain('</html>');
 
       // Check content elements
-      expect(html).toContain('🔔 AI Outlet Notification');
+      expect(html).toContain('🔔 xshopai Notification');
       expect(html).toContain('Event: ORDER_CREATED');
       expect(html).toContain('Test message content');
       expect(html).toContain('This is an automated notification');
@@ -423,7 +423,7 @@ describe('EmailService', () => {
       expect(sentEmail.html).toContain('Test message');
       expect(sentEmail.html).toContain('Event: ORDER_CREATED');
       expect(sentEmail.html).toContain('<!DOCTYPE html>');
-      expect(sentEmail.html).toContain('AI Outlet Notification');
+      expect(sentEmail.html).toContain('xshopai Notification');
     });
 
     it('should not include event data section when not provided', async () => {

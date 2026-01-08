@@ -209,7 +209,7 @@ class EmailService {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notification from AI Outlet</title>
+    <title>Notification from xshopai</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
@@ -224,7 +224,7 @@ class EmailService {
 </head>
 <body>
     <div class="header">
-        <h1>🔔 AI Outlet Notification</h1>
+        <h1>🔔 xshopai Notification</h1>
     </div>
     <div class="content">
         <div class="event-type">Event: ${eventType}</div>
@@ -233,7 +233,7 @@ class EmailService {
         </div>
     </div>
     <div class="footer">
-        <p>This is an automated notification from AI Outlet. Please do not reply to this email.</p>
+        <p>This is an automated notification from xshopai. Please do not reply to this email.</p>
         <p style="margin: 5px 0;">Generated at ${new Date().toISOString()}</p>
     </div>
 </body>

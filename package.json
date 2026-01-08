@@ -24,7 +24,7 @@
     "microservice",
     "typescript"
   ],
-  "author": "AI Outlet Team",
+  "author": "xshopai Team",
   "license": "MIT",
   "dependencies": {
     "@dapr/dapr": "^3.6.1",

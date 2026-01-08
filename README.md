@@ -103,7 +103,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
-EMAIL_FROM_NAME=AI Outlet Notifications
+EMAIL_FROM_NAME=xshopai Notifications
 EMAIL_FROM_ADDRESS=noreply@xshopai.com
 EMAIL_ENABLED=true
 
@@ -227,7 +227,7 @@ After sending a notification, the service publishes an outcome event:
     "originalEventType": "auth.user.registered",
     "channel": "email",
     "recipientEmail": "user@example.com",
-    "subject": "Welcome to AI Outlet!",
+    "subject": "Welcome to xshopai!",
     "attemptNumber": 1
   }
 }

@@ -183,7 +183,7 @@ const config: Config = {
       },
     },
     from: {
-      name: process.env.EMAIL_FROM_NAME || 'AI Outlet Notifications',
+      name: process.env.EMAIL_FROM_NAME || 'xshopai Notifications',
       address: process.env.EMAIL_FROM_ADDRESS || 'noreply@xshopai.local',
     },
     enabled: process.env.EMAIL_ENABLED !== 'false',
